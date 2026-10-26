@@ -1,3 +1,4 @@
+import { availablePort } from "./ports.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
@@ -9,7 +10,7 @@ import { initialContent } from "../content.js";
 import { createHash } from "node:crypto";
 test("Existing databases migrate without losing answers, scores, password or duplicate historical group entries", async () => {
   const dir = mkdtempSync(path.join(tmpdir(), "prado-migration-")),
-    port = 4100 + Math.floor(Math.random() * 100);
+    port = await availablePort();
   const content = structuredClone(initialContent);
   delete content.bonusPoints;
   content.groups = ["Grupa veche"];

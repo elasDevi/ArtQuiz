@@ -1,3 +1,4 @@
+import { availablePort } from "./ports.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
@@ -7,7 +8,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 test("Default profesor account, password updates, session revocation and restart persistence", async () => {
   const dir = mkdtempSync(path.join(tmpdir(), "prado-account-")),
-    port = 4300 + Math.floor(Math.random() * 100),
+    port = await availablePort(),
     base = `http://127.0.0.1:${port}`;
   let child;
   async function start(password = "") {

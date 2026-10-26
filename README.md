@@ -51,18 +51,40 @@ Comanda citește `.env` și folosește același `DATA_DIR` ca serverul. Modific�
 
 ## Evaluarea AI
 
-Setează **numai pe server**, în `.env` ignorat sau în managerul de secrete:
+### Google Gemini — utilizare în limita nivelului gratuit
 
+1. Creează o cheie în [Google AI Studio](https://aistudio.google.com/api-keys), în proiectul tău Google.
+2. Verifică în AI Studio dacă proiectul și modelul ales au cotă gratuită. Nivelul gratuit este limitat, disponibilitatea modelelor se poate schimba, iar aplicația nu poate verifica planul de facturare al proiectului. Nu activează facturarea și nu schimbă automat furnizorul.
+3. Oprește aplicația, deschide `.env` cu `nano .env` și adaugă sau actualizează:
+
+```env
+AI_PROVIDER=gemini
+GEMINI_API_KEY=CHEIA_TA_GOOGLE
+GEMINI_MODEL=gemini-2.5-flash-lite
 ```
-AI_API_KEY=<cheia ta>
+
+4. Salvează cu Ctrl+O, Enter, Ctrl+X, apoi repornește cu `node local-test.js` (sau `npm start` pe server).
+5. În `/admin`, selectează o participare trimisă și apasă **Propune evaluare cu AI**. Furnizorul și modelul apar lângă buton. Verifică și validează propunerea.
+
+Modelul de mai sus este o valoare configurabilă, nu o garanție privind disponibilitatea sau gratuitatea lui în contul tău. Dacă nu este disponibil, setează `GEMINI_MODEL` la un model text compatibil, cu nivel gratuit, disponibil în proiectul tău. Verifică [modelele](https://ai.google.dev/gemini-api/docs/models), [tarifele](https://ai.google.dev/gemini-api/docs/pricing) și [cotele](https://ai.google.dev/gemini-api/docs/rate-limits) actuale. Documentația live nu a putut fi consultată din mediul de dezvoltare din cauza restricției de rețea (403).
+
+Integrarea folosește endpoint-ul compatibil Chat Completions al Gemini: `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`, cu modelul ales și răspuns JSON. Destinație HTTPS de permis pe server: **generativelanguage.googleapis.com**. Cheia `GEMINI_API_KEY` este folosită exclusiv pentru Google; cheia OpenAI nu este reutilizată. Dacă Google răspunde cu 429, aplicația afișează un mesaj privind cota și păstrează punctajele existente. Nu apelează alt furnizor și nu validează automat rezultatele.
+
+### OpenAI — opțiune alternativă
+
+```env
+AI_PROVIDER=openai
+AI_API_KEY=CHEIA_TA_OPENAI
 AI_MODEL=gpt-4.1-mini
 ```
 
-Destinație HTTPS: `api.openai.com`. Modelul poate fi schimbat cu unul compatibil cu Chat Completions și JSON object mode. Cheia nu este inclusă în JavaScript-ul clientului, răspunsuri API sau exporturi. Datele trimise sunt întrebările, baremul și răspunsurile; codurile de acces nu sunt transmise. Anunță participanții conform regulilor instituției înainte de folosirea AI. Poți utiliza exclusiv evaluarea manuală.
+Destinație HTTPS: `api.openai.com`. OpenAI rămâne compatibil cu instalările anterioare. Fără `AI_PROVIDER`, prezența `GEMINI_API_KEY` selectează Gemini; altfel se folosește OpenAI. O selecție explicită are prioritate. Pentru Gemini schimbă modelul prin `GEMINI_MODEL`, nu prin `AI_MODEL`.
+
+Cheile rămân numai în `.env` ignorat de Git sau în managerul de secrete. Nu sunt incluse în JavaScript, răspunsuri API sau exporturi. La evaluare sunt trimise furnizorului ales întrebările, baremul și răspunsurile; numele membrilor și codurile de acces nu sunt trimise. Poți folosi exclusiv evaluarea manuală. Verifică termenii furnizorului pentru proiectul și regiunea ta înainte de utilizarea datelor elevilor.
 
 Baremul inițial este **orientativ**, deoarece PDF-ul conține întrebări, nu răspunsuri oficiale. Verifică-l cu profesoara înainte de concurs, inclusiv atribuirea „Celor șapte păcate capitale”, alternativele pentru statuia de la intrare și identificarea detaliului de la exercițiul 6. Interpretările și emoțiile nu au un singur răspuns corect. Răspunsurile sunt tratate ca date neîncrezătoare în prompt, iar rezultatul AI este verificat pe server ca structură, intervale și acoperire a întrebărilor. Aceste măsuri nu înlocuiesc verificarea umană.
 
-Fără o cheie, butonul AI este dezactivat și evaluarea manuală funcționează. Apelul real către furnizor nu a fost validat în mediul de livrare: nu a fost furnizată o cheie. Nu există o simulare prezentată ca evaluare AI.
+Fără cheia furnizorului selectat, butonul AI este dezactivat și evaluarea manuală funcționează. Apelurile reale către furnizori nu au fost validate în mediul de livrare: nu au fost furnizate chei. Testele verifică separat contractele OpenAI și Gemini cu furnizori simulați, nu cu evaluări reale.
 
 ## Reutilizare / configurare
 

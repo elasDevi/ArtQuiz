@@ -1,3 +1,4 @@
+import { availablePort } from "./ports.js";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -6,7 +7,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import ExcelJS from "exceljs";
 const dir = mkdtempSync(path.join(tmpdir(), "prado-test-")),
-  port = 3100 + Math.floor(Math.random() * 500),
+  port = await availablePort(),
   base = `http://127.0.0.1:${port}`;
 let child;
 function start() {

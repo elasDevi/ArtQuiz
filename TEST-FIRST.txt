@@ -16,7 +16,7 @@ Username: profesor
 Initial password on a new installation: Madridtoledo2026
 No setup token required. Change the password in Challenge & settings > Teacher account.
 Use your existing password if this installation was already configured.
-AI suggestions additionally require a server-side AI_API_KEY.
+AI suggestions require a server-side key: GEMINI_API_KEY for Google Gemini, or AI_API_KEY for OpenAI. See README.md and .env.example.
 
 Answers persist in the data folder. This package contains no existing student data or secrets.
 This launcher binds only to your own computer (127.0.0.1).
