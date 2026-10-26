@@ -341,3 +341,55 @@ test("Editable rubric validates 100 including bonus, resets stale grades, and te
     publicData.content.questions.every((q) => !q.correctAnswer && !q.rubric),
   );
 });
+
+test("Partial and empty forms submit atomically without inventing answers; invalid payloads still fail", async () => {
+  const teacher = client();
+  await teacher.req("/api/session");
+  await teacher.req("/api/admin/login", "POST", {
+    password: "Test-password-2026!",
+  });
+  await teacher.req("/api/admin/contest", "POST", { open: true });
+  const partial = client();
+  await partial.req("/api/session");
+  const entry = await partial.req("/api/join", "POST", {
+    group: "Echipa cu răspunsuri parțiale",
+    members: "Ana și Radu",
+    code: "PARTIAL-ENTRY-2026",
+  });
+  const answers = {
+    1: { artist: "Diego Velázquez" },
+    2: { artist: "Bosch", title: "" },
+    9: { emotions: [] },
+  };
+  await partial.req(
+    "/api/submit",
+    "POST",
+    { answers: { 1: { artist: 42 } }, revision: 0 },
+    400,
+  );
+  assert.deepEqual((await partial.req("/api/progress")).answers, {});
+  const receipt = await partial.req("/api/submit", "POST", {
+    answers,
+    revision: 0,
+  });
+  assert.ok(receipt.submittedAt);
+  assert.deepEqual(receipt.answers, answers);
+  await partial.req("/api/submit", "POST", { answers, revision: 0 }, 409);
+  const saved = (await teacher.req("/api/admin")).entries.find(
+    (e) => e.id === entry.id,
+  );
+  assert.deepEqual(saved.answers, answers);
+  const empty = client();
+  await empty.req("/api/session");
+  await empty.req("/api/join", "POST", {
+    group: "Echipa fără răspunsuri",
+    members: "Ioana și Paul",
+    code: "EMPTY-ENTRY-2026",
+  });
+  const blank = await empty.req("/api/submit", "POST", {
+    answers: {},
+    revision: 0,
+  });
+  assert.ok(blank.submittedAt);
+  assert.deepEqual(blank.answers, {});
+});

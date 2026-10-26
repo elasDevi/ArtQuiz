@@ -312,13 +312,20 @@ function renderQuestion() {
     $("#final-submit").onclick = () =>
       busy($("#final-submit"), async () => {
         await save();
+        const incomplete = content.questions.filter((q) => !complete(q));
+        const warning = incomplete.length
+          ? tr(
+              `Ai ${incomplete.length} exerciții incomplete sau fără răspuns: ${incomplete.map((q) => q.id).join(", ")}. Poți trimite formularul și așa. Părțile fără răspuns primesc 0 puncte; răspunsurile completate se evaluează conform baremului, iar punctele din oficiu se păstrează. După trimitere nu mai poți modifica răspunsurile. Vrei să continui?`,
+              `You have ${incomplete.length} incomplete or unanswered exercises: ${incomplete.map((q) => q.id).join(", ")}. You can still submit. Unanswered parts receive 0 points; completed parts are graded using the rubric, and participation points are retained. Answers cannot be edited after submission. Continue?`,
+            )
+          : tr(
+              "După trimitere nu vei mai putea modifica răspunsurile. Verifică împreună cu echipa.",
+              "You cannot edit answers after submitting. Review them with your team.",
+            );
         if (
           !(await confirm(
             tr("Trimiți răspunsurile finale?", "Submit final answers?"),
-            tr(
-              "După trimitere nu vei mai putea modifica răspunsurile. Verifică împreună cu echipa.",
-              "You cannot edit answers after submitting. Review them with your team.",
-            ),
+            warning,
           ))
         )
           return;
@@ -384,7 +391,7 @@ function questionMarkup(q) {
   }<div class="actions"><button id="save-now" class="secondary">${tr("Salvează pe dispozitiv", "Save on device")}</button><span class="save-status" id="save-status"></span></div><div class="actions question-nav"><button class="secondary" id="previous" ${step === 0 ? "disabled" : ""}>← ${tr("Înapoi", "Back")}</button><button id="next">${step === content.questions.length - 1 ? tr("Verifică răspunsurile", "Review answers") : tr("Mai departe", "Continue")} →</button></div>`;
 }
 function summaryMarkup() {
-  return `<span class="eyebrow">${tr("ULTIMUL PAS", "ONE LAST STEP")}</span><h2>${tr("O ultimă privire.", "One last look.")}</h2><p class="muted">${tr("Verifică răspunsurile înainte de trimitere.", "Review your answers before submitting.")}</p><div class="summary-list">${content.questions.map((q, i) => `<div class="summary-row"><span>${q.id}. ${escape(q[lang])}<br><small class="muted">${complete(q) ? tr("✓ Completat", "✓ Complete") : tr("○ Mai sunt câmpuri de completat", "○ Some fields are missing")}</small></span><button class="secondary" data-edit="${i}">${tr("Verifică", "Review")}</button></div>`).join("")}</div><p class="help">${tr("Poți trimite o singură dată pentru acest cod.", "You can only submit once with this code.")}</p><button class="wide" id="final-submit" ${completed() !== content.questions.length || !open ? "disabled" : ""}>${tr("Trimite răspunsurile finale", "Submit final answers")} →</button>`;
+  return `<span class="eyebrow">${tr("ULTIMUL PAS", "ONE LAST STEP")}</span><h2>${tr("O ultimă privire.", "One last look.")}</h2><p class="muted">${tr("Verifică răspunsurile înainte de trimitere.", "Review your answers before submitting.")}</p><div class="summary-list">${content.questions.map((q, i) => `<div class="summary-row"><span>${q.id}. ${escape(q[lang])}<br><small class="muted">${complete(q) ? tr("✓ Completat", "✓ Complete") : tr("○ Răspuns incomplet sau lipsă", "○ Incomplete or unanswered")}</small></span><button class="secondary" data-edit="${i}">${tr("Verifică", "Review")}</button></div>`).join("")}</div><p class="help">${tr("Poți trimite și dacă nu știi toate răspunsurile. Părțile necompletate primesc 0 puncte. Trimiterea este unică pentru acest cod.", "You may submit even if you do not know every answer. Unanswered parts receive 0 points. You can submit only once with this code.")}</p><button class="wide" id="final-submit" ${!open ? "disabled" : ""}>${tr("Trimite răspunsurile finale", "Submit final answers")} →</button>`;
 }
 function renderSubmitted() {
   root.innerHTML = `<section class="center card"><div class="big-mark">✦</div><span class="eyebrow">${tr("PROVOCARE ÎNCHEIATĂ", "CHALLENGE COMPLETED")}</span><h1>${tr("Arta rămâne cu voi.", "Art stays with you.")}</h1><p>${tr("Răspunsurile au fost trimise cu succes. Profesoara le va evalua și va valida rezultatele înainte de desemnarea câștigătorului.", "Your answers have been submitted. Your teacher will assess and validate results before announcing a winner.")}</p><div class="notice success">${escape(progress.group)} · ${tr("Trimis", "Submitted")}: ${escape(new Date(progress.submittedAt).toLocaleString(lang === "ro" ? "ro-RO" : "en-GB"))}<br>ID: ${escape(progress.id.slice(0, 8))}</div><p class="help">${tr("Răspunsurile sunt salvate pe server și nu mai pot fi modificate.", "Your answers are stored on the server and can no longer be edited.")}</p><button id="home">${tr("Înapoi la început", "Back to the start")}</button></section>`;

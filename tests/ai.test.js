@@ -134,6 +134,36 @@ test("AI provider contract: proposals are unvalidated, invalid ranges rejected, 
       ).total,
       100,
     );
+    const partial = await req("/api/join", "POST", {
+      group: "Echipa cu răspunsuri lipsă",
+      members: "Ana și Maria",
+      code: "AI-PARTIAL-ENTRY",
+    });
+    await req("/api/submit", "POST", {
+      answers: { 1: { artist: "Diego Velázquez" } },
+      revision: 0,
+    });
+    await req(`/api/admin/entries/${partial.id}/ai`, "POST", {});
+    const assessed = (await req("/api/admin")).entries.find(
+      (e) => e.id === partial.id,
+    );
+    assert.equal(assessed.scores.find((s) => s.id === 1).score, 4);
+    assert.ok(
+      assessed.scores
+        .filter((s) => s.id !== 1)
+        .every((s) => s.score === 0 && s.reason.includes("necompletat")),
+    );
+    await req(`/api/admin/entries/${partial.id}/scores`, "PUT", {
+      scores: assessed.scores,
+      validated: true,
+      revision: assessed.revision,
+    });
+    assert.equal(
+      (await req("/api/admin")).ranking.find(
+        (r) => r.group === "Echipa cu răspunsuri lipsă",
+      ).total,
+      15,
+    );
     assert.ok(
       !(await (await fetch(`http://127.0.0.1:${port}/app.js`)).text()).includes(
         "test-only-fake-key",

@@ -280,3 +280,46 @@ test("phone drafts stay local through offline reload and upload only on explicit
   expect(writes).not.toContain("/api/progress");
   expect(writes.filter((x) => x === "/api/submit")).toHaveLength(2); // rejected request + successful request
 });
+
+test("incomplete form can be submitted after an explicit warning, or cancelled without uploading", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/");
+  await page.locator("#group").fill("Echipa care nu știe tot");
+  await page.locator("#members").fill("Ana și Vlad");
+  await page.locator("#code").fill("INCOMPLETE-BROWSER-2026");
+  await page.locator("#join-form button").click();
+  await page.locator("[data-field]").first().fill("Diego Velázquez");
+  await page.locator('[data-step="11"]').click();
+  await page.locator("#next").click();
+  await expect(page.locator("#final-submit")).toBeEnabled();
+  await page.locator("#final-submit").click();
+  await expect(page.locator("#confirm-copy")).toContainText(
+    "11 exerciții incomplete",
+  );
+  await expect(page.locator("#confirm-copy")).toContainText("0 puncte");
+  await expect(page.locator("#confirm-copy")).toContainText(
+    "punctele din oficiu se păstrează",
+  );
+  await page.locator("#confirm-cancel").click();
+  await expect(page.locator("#final-submit")).toBeVisible();
+  const auth = await (await request.get("/api/session")).json();
+  await request.post("/api/admin/login", {
+    headers: { "x-csrf-token": auth.csrf },
+    data: { password: "Browser-test-password-2026!" },
+  });
+  let entry = (await (await request.get("/api/admin")).json()).entries.find(
+    (e) => e.group_name === "Echipa care nu știe tot",
+  );
+  expect(entry.answers).toEqual({});
+  expect(entry.submitted_at).toBe(null);
+  await page.locator("#final-submit").click();
+  await page.locator("#confirm-ok").click();
+  await expect(page.locator("h1")).toContainText("Arta rămâne");
+  entry = (await (await request.get("/api/admin")).json()).entries.find(
+    (e) => e.id === entry.id,
+  );
+  expect(entry.answers).toEqual({ 1: { artist: "Diego Velázquez" } });
+  expect(entry.submitted_at).toBeTruthy();
+});
