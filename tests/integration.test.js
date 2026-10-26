@@ -93,8 +93,14 @@ test("Full persistent contest lifecycle, authorization, concurrency, validation 
   );
   await student.req("/api/session");
   await teacher.req("/api/session");
-  await teacher.req("/api/admin/login", "POST", { password: "wrong" }, 401);
+  await teacher.req(
+    "/api/admin/login",
+    "POST",
+    { username: "profesor", password: "wrong" },
+    401,
+  );
   await teacher.req("/api/admin/login", "POST", {
+    username: "profesor",
     password: "Test-password-2026!",
   });
   const joined = await student.req("/api/join", "POST", {
@@ -218,6 +224,7 @@ test("Editable rubric validates 100 including bonus, resets stale grades, and te
   const teacher = client();
   await teacher.req("/api/session");
   await teacher.req("/api/admin/login", "POST", {
+    username: "profesor",
     password: "Test-password-2026!",
   });
   let d = await teacher.req("/api/admin");
@@ -346,6 +353,7 @@ test("Partial and empty forms submit atomically without inventing answers; inval
   const teacher = client();
   await teacher.req("/api/session");
   await teacher.req("/api/admin/login", "POST", {
+    username: "profesor",
     password: "Test-password-2026!",
   });
   await teacher.req("/api/admin/contest", "POST", { open: true });

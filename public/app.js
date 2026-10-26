@@ -401,19 +401,13 @@ function renderSubmitted() {
   };
 }
 function renderLogin() {
-  root.innerHTML = `<section class="login card"><span class="eyebrow">${tr("SPAȚIUL PROFESOAREI", "TEACHER’S SPACE")}</span><h1>${session.needsSetup ? tr("Prima configurare", "First-time setup") : tr("Bine ai revenit.", "Welcome back.")}</h1><p class="muted">${session.needsSetup ? tr("Creează parola administratorului folosind tokenul din fișierul data/.setup-token de pe server.", "Create an administrator password using the token in data/.setup-token on the server.") : tr("Răspunsuri, evaluare și clasament — într-un singur loc.", "Answers, assessment and rankings — all in one place.")}</p><form id="login-form">${session.needsSetup ? `<div class="field"><label for="setup-token">Setup token</label><input id="setup-token" type="password" required autocomplete="off"></div>` : ""}<div class="field"><label for="password">${tr("Parolă administrator", "Administrator password")}</label><input id="password" type="password" required ${session.needsSetup ? 'minlength="12"' : ""} maxlength="200" autocomplete="${session.needsSetup ? "new-password" : "current-password"}"></div><p class="error-text" id="login-error"></p><button class="wide">${session.needsSetup ? tr("Configurează accesul", "Configure access") : tr("Intră în panou", "Open dashboard")} →</button></form></section>`;
+  root.innerHTML = `<section class="login card"><span class="eyebrow">${tr("SPAȚIUL PROFESOAREI", "TEACHER’S SPACE")}</span><h1>${tr("Bine ai revenit.", "Welcome back.")}</h1><p class="muted">${tr("Răspunsuri, evaluare și clasament — într-un singur loc.", "Answers, assessment and rankings — all in one place.")}</p><form id="login-form"><div class="field"><label for="username">${tr("Utilizator", "Username")}</label><input id="username" name="username" required autocomplete="username" value="profesor" maxlength="80"></div><div class="field"><label for="password">${tr("Parolă", "Password")}</label><input id="password" name="password" type="password" required maxlength="200" autocomplete="current-password"></div><p class="error-text" id="login-error"></p><button class="wide">${tr("Intră în panou", "Open dashboard")} →</button></form></section>`;
   $("#login-form").onsubmit = (e) => {
     e.preventDefault();
     busy($("#login-form button"), async () => {
       try {
-        if (session.needsSetup) {
-          await api("/api/admin/setup", "POST", {
-            token: $("#setup-token").value,
-            password: $("#password").value,
-          });
-          session.needsSetup = false;
-        }
         const r = await api("/api/admin/login", "POST", {
+          username: $("#username").value,
           password: $("#password").value,
         });
         csrf = r.csrf;
@@ -435,7 +429,7 @@ function renderAdmin() {
     return;
   }
   const d = adminData;
-  root.innerHTML = `<div class="page-head"><div><span class="eyebrow">${tr("PANOU DE ADMINISTRARE", "TEACHER DASHBOARD")}</span><h1>${escape(d.content.title)}</h1><span class="pill"><span class="dot"></span>${d.open ? tr("CONCURS DESCHIS", "CHALLENGE OPEN") : tr("CONCURS ÎNCHIS", "CHALLENGE CLOSED")}</span></div><button class="secondary" id="logout">${tr("Deconectare", "Sign out")} ↗</button></div><div class="stats"><div class="card stat"><b>${d.entries.length}</b><span>${tr("participări", "entries")}</span></div><div class="card stat"><b>${d.entries.filter((e) => e.submitted_at).length}</b><span>${tr("trimise", "submitted")}</span></div><div class="card stat"><b>${d.entries.filter((e) => e.validated).length}</b><span>${tr("validate", "validated")}</span></div></div><div class="admin-tabs">${[
+  root.innerHTML = `<div class="page-head"><div><span class="eyebrow">${tr("PANOU DE ADMINISTRARE", "TEACHER DASHBOARD")}</span><h1>${escape(d.content.title)}</h1><span class="pill"><span class="dot"></span>${d.open ? tr("CONCURS DESCHIS", "CHALLENGE OPEN") : tr("CONCURS ÎNCHIS", "CHALLENGE CLOSED")}</span></div><button class="secondary" id="logout">${tr("Deconectare", "Sign out")} ↗</button></div><div class="stats"><div class="card stat"><b>${d.entries.length}</b><span>${tr("participări", "entries")}</span></div><div class="card stat"><b>${d.entries.filter((e) => e.submitted_at).length}</b><span>${tr("trimise", "submitted")}</span></div><div class="card stat"><b>${d.entries.filter((e) => e.validated).length}</b><span>${tr("validate", "validated")}</span></div></div>${d.usesDefaultPassword ? `<div class="notice">${tr("Folosești parola inițială. O poți schimba din „Concurs & configurare” → „Contul profesoarei”.", "You are using the initial password. Change it in Challenge & settings → Teacher account.")}</div>` : ""}<div class="admin-tabs">${[
     ["entries", "Răspunsuri & evaluare", "Answers & assessment"],
     ["rubric", "Barem & răspunsuri corecte", "Rubric & correct answers"],
     ["ranking", "Clasament", "Rankings"],
@@ -629,6 +623,33 @@ function renderSettings() {
   const d = adminData;
   $("#admin-body").innerHTML =
     `<section class="card"><span class="eyebrow">${tr("CONTROLUL CONCURSULUI", "CHALLENGE CONTROLS")}</span><h2>${tr("Pregătește următoarea descoperire.", "Prepare the next discovery.")}</h2><div class="actions"><button id="toggle-contest" class="secondary">${d.open ? tr("Închide concursul", "Close challenge") : tr("Deschide concursul", "Open challenge")}</button></div><p class="help">${tr("Închiderea oprește intrările, salvările și trimiterile noi. Răspunsurile existente rămân păstrate. Schimbarea stării resetează anunțul câștigătorului.", "Closing stops new entries, saves and submissions. Existing answers are preserved. Changing status resets the winner announcement.")}</p><h3>${tr("Invită echipele", "Invite your teams")}</h3><p class="help">${tr("Codul QR folosește PUBLIC_URL dacă este configurat, altfel adresa curentă. Verifică adresa publică înainte de distribuire.", "The QR uses PUBLIC_URL when configured, otherwise the current address. Verify the public URL before sharing.")}</p><img src="/api/admin/qr" class="qr" alt="QR code"><div class="actions"><button class="secondary" id="copy-link">${tr("Copiază linkul elevilor", "Copy student link")}</button><a class="button secondary" href="/api/admin/qr" download="prado-qr.png">↓ QR PNG</a></div><hr><h3>${tr("Întrebări, imagini și barem", "Questions, images and rubric")}</h3><p class="help">${tr("Editează JSON înainte de prima participare. Punctajele întrebărilor plus punctele din oficiu trebuie să totalizeze exact 100. Folosește ecranul Barem pentru editarea simplă, inclusiv după înscrieri. Imaginile sunt fișiere locale din public/images; folosește căi /images/nume.jpg. Pentru un alt muzeu, păstrează baza curentă și pornește cu un DATA_DIR nou.", "Edit JSON before the first entry. Question points plus participation points must total exactly 100. Use the Rubric screen for simple editing, including after registration. Images are local files in public/images; use /images/name.jpg paths. For another museum, preserve the current database and start with a new DATA_DIR.")}</p><form id="content-form"><label for="content-json">${tr("Configurație completă", "Complete configuration")}</label><textarea class="config-editor" id="content-json" spellcheck="false" ${d.entries.length ? "readonly" : ""}>${escape(JSON.stringify(d.content, null, 2))}</textarea><div class="actions"><button ${d.entries.length ? "disabled" : ""}>${tr("Salvează configurația", "Save configuration")}</button><button type="button" id="download-config" class="secondary">↓ JSON</button></div></form><details><summary class="help">${tr("Istoric operațiuni (ultimele 100)", "Audit log (latest 100)")}</summary><div class="answer">${d.audit.map((a) => escape(`${a.at} · ${a.action} · ${a.entry_id?.slice(0, 8) || ""}`)).join("\n")}</div></details></section>`;
+  $("#admin-body").insertAdjacentHTML(
+    "beforeend",
+    `<section class="card account-settings"><span class="eyebrow">${tr("CONTUL PROFESOAREI", "TEACHER ACCOUNT")}</span><h2>${tr("Schimbă parola", "Change password")}</h2><p class="help">${tr("Utilizator: profesor. Schimbarea parolei se păstrează după repornirea aplicației și deconectează celelalte sesiuni ale profesorului.", "Username: profesor. Password changes persist after restarting and sign out other teacher sessions.")}</p><form id="password-form"><div class="field"><label for="current-password">${tr("Parola actuală", "Current password")}</label><input id="current-password" type="password" required maxlength="200" autocomplete="current-password"></div><div class="form-row"><div class="field"><label for="new-password">${tr("Parola nouă", "New password")}</label><input id="new-password" type="password" required minlength="12" maxlength="200" autocomplete="new-password"></div><div class="field"><label for="confirm-password">${tr("Confirmă parola nouă", "Confirm new password")}</label><input id="confirm-password" type="password" required minlength="12" maxlength="200" autocomplete="new-password"></div></div><p class="help">${tr("Minimum 12 caractere.", "At least 12 characters.")}</p><p class="error-text" id="password-error" role="alert"></p><button type="submit">${tr("Salvează parola", "Save password")}</button></form></section>`,
+  );
+  $("#password-form").onsubmit = (e) => {
+    e.preventDefault();
+    busy($("#password-form button"), async () => {
+      $("#password-error").textContent = "";
+      try {
+        const result = await api("/api/admin/password", "POST", {
+          currentPassword: $("#current-password").value,
+          newPassword: $("#new-password").value,
+          confirmPassword: $("#confirm-password").value,
+        });
+        csrf = result.csrf;
+        await loadAdmin();
+        toast(
+          tr(
+            "Parola a fost schimbată. Celelalte sesiuni ale profesorului au fost deconectate.",
+            "Password changed. Other teacher sessions were signed out.",
+          ),
+        );
+      } catch (error) {
+        $("#password-error").textContent = error.message;
+      }
+    });
+  };
   $("#toggle-contest").onclick = () =>
     busy($("#toggle-contest"), async () => {
       if (

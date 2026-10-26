@@ -50,6 +50,7 @@ test("AI provider contract: proposals are unvalidated, invalid ranges rejected, 
     }
     await req("/api/session");
     await req("/api/admin/login", "POST", {
+      username: "profesor",
       password: "AI-test-password-2026!",
     });
     const c = (await req("/api/admin")).content;

@@ -85,6 +85,7 @@ test("Existing databases migrate without losing answers, scores, password or dup
     }
     await req("/api/session");
     await req("/api/admin/login", "POST", {
+      username: "profesor",
       password: "Migration-test-password!",
     });
     const d = await req("/api/admin");

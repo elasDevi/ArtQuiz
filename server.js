@@ -110,30 +110,30 @@ function hashPassword(password, salt = randomBytes(16).toString("hex")) {
   return `${salt}:${scryptSync(password, salt, 64).toString("hex")}`;
 }
 function passwordOK(password) {
-  const stored = process.env.ADMIN_PASSWORD_HASH || get("adminHash");
+  const stored = get("adminHash");
   if (!stored) return false;
   const [salt, hex] = stored.split(":");
   const expected = Buffer.from(hex, "hex"),
     actual = scryptSync(password, salt, 64);
   return expected.length === actual.length && timingSafeEqual(expected, actual);
 }
-if (process.env.ADMIN_PASSWORD) {
-  if (process.env.ADMIN_PASSWORD.length < 12)
-    throw Error("ADMIN_PASSWORD must have at least 12 characters");
-  const old = get("adminHash");
-  if (!old || !passwordOK(process.env.ADMIN_PASSWORD))
-    set("adminHash", hashPassword(process.env.ADMIN_PASSWORD));
+const ADMIN_USERNAME = "profesor";
+const INITIAL_ADMIN_PASSWORD = "Madridtoledo2026";
+// Bootstrap only. Restarting must never overwrite a password changed by the teacher.
+if (!get("adminHash")) {
+  if (process.env.ADMIN_PASSWORD_HASH) {
+    if (!/^[a-f0-9]{32}:[a-f0-9]{128}$/i.test(process.env.ADMIN_PASSWORD_HASH))
+      throw Error("ADMIN_PASSWORD_HASH must be a salt:hash scrypt value");
+    set("adminHash", process.env.ADMIN_PASSWORD_HASH);
+  } else {
+    const password = process.env.ADMIN_PASSWORD || INITIAL_ADMIN_PASSWORD;
+    if (password.length < 12 || password.length > 200)
+      throw Error("ADMIN_PASSWORD must have 12–200 characters");
+    set("adminHash", hashPassword(password));
+  }
 }
-if (!get("adminHash") && !process.env.ADMIN_PASSWORD_HASH) {
-  const setupFile = path.join(dir, ".setup-token");
-  if (!existsSync(setupFile))
-    writeFileSync(setupFile, randomBytes(24).toString("hex"), { mode: 0o600 });
-  console.log(
-    "Admin setup required: use the token from " +
-      setupFile +
-      " on /admin. Never commit this file.",
-  );
-}
+if (get("adminUsesDefaultPassword") === null)
+  set("adminUsesDefaultPassword", passwordOK(INITIAL_ADMIN_PASSWORD));
 class SqlStore extends session.Store {
   get(id, cb) {
     try {
@@ -217,7 +217,7 @@ app.get("/api/session", (req, res) => {
     csrf: req.session.csrf,
     admin: !!req.session.admin,
     student: !!req.session.entry,
-    needsSetup: !get("adminHash") && !process.env.ADMIN_PASSWORD_HASH,
+    needsSetup: false,
   });
 });
 const authLimit = rateLimit({
@@ -248,39 +248,90 @@ app.get("/api/content", (req, res) =>
     winner: get("winner"),
   }),
 );
-app.post("/api/admin/setup", authLimit, (req, res) => {
-  if (get("adminHash") || process.env.ADMIN_PASSWORD_HASH)
-    return res.status(409).json({ error: "Already configured" });
-  const { token, password } = req.body;
-  const expected = readFileSync(path.join(dir, ".setup-token"), "utf8");
-  const a = createHash("sha256").update(String(token)).digest(),
-    b = createHash("sha256").update(expected).digest();
-  if (!timingSafeEqual(a, b))
-    return res.status(403).json({ error: "Invalid setup token" });
-  if (
-    typeof password !== "string" ||
-    password.length < 12 ||
-    password.length > 200
-  )
-    return res
-      .status(400)
-      .json({ error: "Parola trebuie să aibă 12–200 caractere." });
-  set("adminHash", hashPassword(password));
-  audit("admin_setup");
-  res.json({ ok: true });
-});
 app.post("/api/admin/login", authLimit, (req, res) => {
   const p = req.body.password;
-  if (typeof p !== "string" || p.length > 200 || !passwordOK(p))
+  if (
+    req.body.username !== ADMIN_USERNAME ||
+    typeof p !== "string" ||
+    p.length > 200 ||
+    !passwordOK(p)
+  )
     return res
       .status(401)
-      .json({ error: "Parolă incorectă / Incorrect password" });
+      .json({
+        error:
+          "Utilizator sau parolă incorectă / Incorrect username or password",
+      });
   req.session.regenerate((err) => {
     if (err) return res.status(500).json({ error: "Session error" });
     req.session.admin = true;
     req.session.csrf = randomBytes(24).toString("hex");
     audit("admin_login");
     res.json({ csrf: req.session.csrf });
+  });
+});
+app.post("/api/admin/password", admin, authLimit, (req, res) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+  if (
+    typeof currentPassword !== "string" ||
+    currentPassword.length > 200 ||
+    !passwordOK(currentPassword)
+  )
+    return res
+      .status(401)
+      .json({
+        error:
+          "Parola actuală este incorectă. / Current password is incorrect.",
+      });
+  if (
+    typeof newPassword !== "string" ||
+    newPassword.length < 12 ||
+    newPassword.length > 200
+  )
+    return res
+      .status(400)
+      .json({
+        error:
+          "Parola nouă trebuie să aibă 12–200 caractere. / New password must have 12–200 characters.",
+      });
+  if (newPassword !== confirmPassword)
+    return res
+      .status(400)
+      .json({
+        error: "Parolele noi nu coincid. / New passwords do not match.",
+      });
+  if (newPassword === currentPassword)
+    return res
+      .status(400)
+      .json({
+        error:
+          "Alege o parolă diferită de cea actuală. / Choose a different password.",
+      });
+  const hash = hashPassword(newPassword);
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    set("adminHash", hash);
+    set("adminUsesDefaultPassword", newPassword === INITIAL_ADMIN_PASSWORD);
+    db.prepare(
+      "DELETE FROM sessions WHERE json_extract(data,'$.admin')=1",
+    ).run();
+    audit("admin_password_changed");
+    db.exec("COMMIT");
+  } catch (e) {
+    db.exec("ROLLBACK");
+    throw e;
+  }
+  req.session.regenerate((err) => {
+    if (err)
+      return res
+        .status(500)
+        .json({
+          error:
+            "Parola a fost schimbată. Autentifică-te din nou. / Password changed. Sign in again.",
+        });
+    req.session.admin = true;
+    req.session.csrf = randomBytes(24).toString("hex");
+    res.json({ ok: true, csrf: req.session.csrf });
   });
 });
 app.post("/api/logout", (req, res) =>
@@ -505,6 +556,8 @@ app.get("/api/admin", admin, (req, res) =>
     winner: get("winner"),
     ranking: ranking(),
     aiConfigured: !!process.env.AI_API_KEY,
+    username: ADMIN_USERNAME,
+    usesDefaultPassword: get("adminUsesDefaultPassword"),
     publicUrl:
       process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}/`,
     audit: db.prepare("SELECT * FROM audit ORDER BY id DESC LIMIT 100").all(),

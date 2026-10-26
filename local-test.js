@@ -51,7 +51,7 @@ child.stdout.on("data", (chunk) => {
     opened = true;
     console.log("\nOPEN: " + url + "\nTeacher dashboard: " + url + "/admin");
     console.log(
-      "First-time teacher setup: open data/.setup-token with a text editor and use it in /admin to choose your password.",
+      "Teacher username: profesor. For the initial password, see TEST-FIRST.txt. Change it in Challenge & settings > Teacher account. Existing passwords are preserved.",
     );
     if (process.env.NO_BROWSER === "1") return;
     const command =

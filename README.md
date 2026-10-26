@@ -12,7 +12,14 @@ npm start
 
 Serverul ascultă pe portul 3000. Pagina elevilor este `/`, iar panoul profesoarei `/admin`.
 
-La prima pornire, dacă nu există `ADMIN_PASSWORD`, serverul creează `data/.setup-token` (fișier privat, ignorat de Git). Citește-l **local pe server** și introdu tokenul în formularul de configurare din `/admin`, împreună cu o parolă de minimum 12 caractere. Nu trimite tokenul în conversații sau jurnale publice. Alternativ, configurează `ADMIN_PASSWORD` prin secretul platformei înainte de pornire. Parola este stocată numai ca hash scrypt cu salt. Nu există o parolă implicită. O valoare `ADMIN_PASSWORD` nouă configurează/resetază parola la repornire.
+La prima pornire se creează automat contul profesoarei:
+
+- **Utilizator:** `profesor`
+- **Parolă inițială:** `Madridtoledo2026`
+
+Nu este necesar un setup token. După autentificare, schimbă parola din **Concurs & configurare → Contul profesoarei → Schimbă parola**: introdu parola actuală, noua parolă (12–200 caractere) și confirmarea. Parola este stocată numai ca hash scrypt cu salt. Schimbarea ei deconectează celelalte sesiuni ale profesorului, păstrează sesiunea curentă și nu deconectează elevii.
+
+**O instalare existentă își păstrează parola**; actualizarea nu o înlocuiește cu parola implicită. Modificările persistă după repornire. `ADMIN_PASSWORD` sau `ADMIN_PASSWORD_HASH` pot seta o parolă personalizată numai la inițializarea unei baze noi; nu suprascriu ulterior parola schimbată în aplicație. Fostul fișier `.setup-token`, dacă există într-o instalare veche, nu mai este folosit.
 
 ## Fluxul elevilor
 

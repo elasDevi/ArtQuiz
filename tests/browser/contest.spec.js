@@ -177,7 +177,7 @@ test("phone drafts stay local through offline reload and upload only on explicit
   const auth = await (await request.get("/api/session")).json();
   const login = await request.post("/api/admin/login", {
     headers: { "x-csrf-token": auth.csrf },
-    data: { password: "Browser-test-password-2026!" },
+    data: { username: "profesor", password: "Browser-test-password-2026!" },
   });
   expect(login.ok()).toBeTruthy();
   await page.goto("/");
@@ -307,7 +307,7 @@ test("incomplete form can be submitted after an explicit warning, or cancelled w
   const auth = await (await request.get("/api/session")).json();
   await request.post("/api/admin/login", {
     headers: { "x-csrf-token": auth.csrf },
-    data: { password: "Browser-test-password-2026!" },
+    data: { username: "profesor", password: "Browser-test-password-2026!" },
   });
   let entry = (await (await request.get("/api/admin")).json()).entries.find(
     (e) => e.group_name === "Echipa care nu știe tot",
@@ -322,4 +322,34 @@ test("incomplete form can be submitted after an explicit warning, or cancelled w
   );
   expect(entry.answers).toEqual({ 1: { artist: "Diego Velázquez" } });
   expect(entry.submitted_at).toBeTruthy();
+});
+
+test("teacher signs in as profesor and changes password from the dashboard", async ({
+  page,
+}) => {
+  await page.goto("/admin");
+  await expect(page.locator("#username")).toHaveValue("profesor");
+  await expect(page.locator("#setup-token")).toHaveCount(0);
+  await page.locator("#password").fill("Browser-test-password-2026!");
+  await page.locator("#login-form button").click();
+  await page.locator("[data-tab=settings]").click();
+  await page.locator("#current-password").fill("Wrong-current-password");
+  await page.locator("#new-password").fill("Browser-updated-password-2026!");
+  await page
+    .locator("#confirm-password")
+    .fill("Browser-updated-password-2026!");
+  await page.locator("#password-form button").click();
+  await expect(page.locator("#password-error")).toContainText(
+    "actuală este incorectă",
+  );
+  await page.locator("#current-password").fill("Browser-test-password-2026!");
+  await page.locator("#password-form button").click();
+  await expect(page.locator("#toast")).toContainText("Parola a fost schimbată");
+  await page.locator("#logout").click();
+  await page.locator("#password").fill("Browser-test-password-2026!");
+  await page.locator("#login-form button").click();
+  await expect(page.locator("#login-error")).toContainText("incorectă");
+  await page.locator("#password").fill("Browser-updated-password-2026!");
+  await page.locator("#login-form button").click();
+  await expect(page.locator(".stats")).toBeVisible();
 });
