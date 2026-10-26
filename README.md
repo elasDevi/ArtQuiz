@@ -18,12 +18,12 @@ La prima pornire, dacă nu există `ADMIN_PASSWORD`, serverul creează `data/.se
 
 1. Introdu un nume unic de echipă, descrierea cu membrii (preferabil prenume) și creează un cod unic (6–40 caractere, recomandat 10+ aleatorii). Pentru reluare selectează „Reia participarea” și introdu numele și codul, indiferent de majuscule; păstrați codul în echipă. Numele este unic după normalizarea majusculelor și spațiilor suplimentare. Numărul echipelor nu este fix. Codul este un secret de acces, nu un simplu număr public.
 2. Completează cele 12 exerciții. Cele cinci detalii sunt imaginile originale extrase din PDF, fără regenerare. Textul întrebărilor este transcris și tradus; exercițiile cu subpuncte păstrează câmpuri distincte. Exercițiul 9 permite mai multe emoții.
-3. Modificările sunt salvate automat pe server, cu indicator de stare. O copie locală permite recuperarea modificărilor nesalvate; aplicația nu promite funcționare offline completă.
-4. Verifică și trimite. Toate câmpurile sunt obligatorii. Trimiterea este atomică și unică pentru cod; răspunsurile devin nemodificabile.
+3. Fiecare modificare se salvează imediat **numai pe telefon/dispozitiv**, în browser (localStorage), cu indicator „Salvat pe acest dispozitiv · netrimis”. Navigarea între exerciții nu trimite răspunsuri serverului. După înscriere și încărcarea inițială, fișierele publice sunt păstrate de service worker pentru reluarea ciornei și reîncărcarea paginii offline (HTTPS sau localhost). Ciorna nu se sincronizează cu alte dispozitive; păstrează același telefon și browser și nu șterge datele site-ului.
+4. Verifică și apasă „Trimite”. Numai acum întregul set de răspunsuri este salvat pe server într-o operațiune atomică, împreună cu data trimiterii. Toate câmpurile sunt obligatorii. Este nevoie de internet pentru înscriere și trimitere, nu pentru completarea formularului deja încărcat. Trimiterea este unică pentru cod; răspunsurile devin nemodificabile. Dacă trimiterea nu este confirmată, ciorna rămâne pe dispozitiv pentru reîncercare; se elimină numai după confirmarea serverului.
 
 ## Fluxul profesoarei
 
-- `/admin`: filtrează participările pe echipe, citește răspunsuri și ciorne.
+- `/admin`: filtrează participările pe echipe, citește răspunsurile trimise și vede echipele înscrise. Răspunsurile în curs de completare rămân doar pe dispozitivele elevilor.
 - Completează manual punctajele/justificările sau cere o propunere AI. Fiecare exercițiu are un maxim; totalul întrebărilor plus punctele din oficiu este exact 100. Propunerea pentru baze noi este 90 + 10. AI nu validează rezultate.
 - Revizuiește punctajele, modifică-le și bifează validarea. Salvările concurente sunt detectate; nicio evaluare nu se suprascrie silențios.
 - Închide concursul, validează toate participările trimise și desemnează câștigătorul. La egalitate alegerea este explicită dintre echipele cu punctaj maxim.
@@ -67,6 +67,8 @@ Pentru o ediție sau un muzeu nou, oprește serverul și configurează un `DATA_
 5. Pornește `node local-test.js` din noul folder. Lansatorul citește acum și `.env`, inclusiv cheia AI configurată local.
 6. Migrarea adaugă câmpurile noi fără a șterge răspunsuri, parole sau evaluări. Pentru bazele existente punctajele se păstrează și oficiul este inițial 0; în ecranul Barem poți încărca propunerea **90 + 10** și o poți adapta înainte de salvare.
 
+Ciornele salvate pe server de versiunile anterioare sunt păstrate pentru compatibilitate; noua versiune nu mai salvează răspunsuri intermediare pe server. Vechiul `PUT /api/progress` răspunde cu 410; `GET /api/progress` permite reluarea participării și citirea răspunsurilor istorice.
+
 Nu suprascrie o bază existentă cu una goală. Înainte de modificarea baremului folosit, exportă rezultatele dacă vrei să păstrezi evaluările curente.
 
 ## Găzduire cu persistență
@@ -88,6 +90,6 @@ npm run test:browser
 npm audit --omit=dev
 ```
 
-Testul contractului AI folosește un furnizor simulat numai în teste și verifică salvarea propunerilor nevalidate și respingerea punctajelor invalide; nu dovedește conectarea la serviciul real. Testele API folosesc o bază temporară și verifică fluxul complet, accesul neautorizat, CSRF, reluarea de pe altă sesiune, persistența după repornire, conflictele de versiune, blocarea duplicatelor, limitele punctajului, validarea, clasamentul, Excel/PDF și QR. Testul browser folosește o bază separată, Chromium și verifică fluxul elev–profesoară, mobilul, limba și schimbarea automată a temei. Pe acest mediu Chromium este `/usr/bin/chromium`; setează `CHROMIUM_PATH` dacă este în altă locație. Pentru repetarea testului browser folosește un director gol: `E2E_DATA_DIR=/tmp/prado-e2e-nou npm run test:browser`.
+Testul contractului AI folosește un furnizor simulat numai în teste și verifică salvarea propunerilor nevalidate și respingerea punctajelor invalide; nu dovedește conectarea la serviciul real. Testele API folosesc o bază temporară și verifică fluxul complet, accesul neautorizat, CSRF, reluarea de pe altă sesiune, persistența după repornire, conflictele de versiune, blocarea duplicatelor, limitele punctajului, validarea, clasamentul, Excel/PDF și QR. Testele browser folosesc o bază separată și Chromium: verifică fluxul elev–profesoară, mobilul, limba, temele, editorul de barem, lipsa transmiterii răspunsurilor înainte de submit, recuperarea ciornei după reîncărcare offline, păstrarea ei după trimitere eșuată și încărcarea finală pe server. Pe acest mediu Chromium este `/usr/bin/chromium`; setează `CHROMIUM_PATH` dacă este în altă locație. Pentru repetarea testului browser folosește un director gol: `E2E_DATA_DIR=/tmp/prado-e2e-nou npm run test:browser`.
 
 Nu este necesar un build de frontend: fișierele statice sunt livrate direct, iar Node execută backend-ul. Publicarea într-un serviciu de găzduire și testarea cu cheia AI reală rămân operațiuni separate de rularea și testarea locală.

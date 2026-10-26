@@ -68,8 +68,7 @@ test("AI provider contract: proposals are unvalidated, invalid ranges rejected, 
           },
         ]),
       );
-      await req("/api/progress", "PUT", { answers, revision: 0 });
-      await req("/api/submit", "POST", { revision: 1 });
+      await req("/api/submit", "POST", { answers, revision: 0 });
       return e.id;
     }
     const id = await submit("AI-VALID-ENTRY", "Interpretare argumentată");

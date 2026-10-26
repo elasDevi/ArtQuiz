@@ -410,32 +410,25 @@ function validAnswers(answers) {
   }
   return true;
 }
-app.put("/api/progress", student, (req, res) => {
-  if (!get("open") || req.entry.submitted_at)
-    return res
-      .status(409)
-      .json({ error: "Răspunsurile sunt blocate / Answers are locked" });
-  if (!validAnswers(req.body.answers))
-    return res.status(400).json({ error: "Invalid answers" });
-  const result = db
-    .prepare(
-      "UPDATE entries SET answers=?,revision=revision+1 WHERE id=? AND revision=? AND submitted_at IS NULL",
-    )
-    .run(JSON.stringify(req.body.answers), req.entry.id, req.body.revision);
-  if (!result.changes)
-    return res.status(409).json({
+app.put("/api/progress", student, (req, res) =>
+  res
+    .status(410)
+    .json({
       error:
-        "Progres modificat pe alt dispozitiv. Reîncarcă pagina. / Progress changed on another device. Reload.",
-    });
-  res.json({ revision: req.body.revision + 1 });
-});
+        "Ciornele se salvează numai pe dispozitiv. Răspunsurile se trimit prin /api/submit. / Drafts are local only; submit final answers.",
+    }),
+);
 app.post("/api/submit", student, (req, res) => {
   if (!get("open") || req.entry.submitted_at)
     return res.status(409).json({
       error: "Deja trimis sau concurs închis / Already submitted or closed",
     });
-  const a = JSON.parse(req.entry.answers),
+  const a = req.body.answers,
     c = get("content");
+  if (!validAnswers(a))
+    return res
+      .status(400)
+      .json({ error: "Răspunsuri invalide / Invalid answers" });
   const complete = c.questions.every(
     (q) =>
       q.fields.every(
@@ -450,13 +443,22 @@ app.post("/api/submit", student, (req, res) => {
     });
   const r = db
     .prepare(
-      "UPDATE entries SET submitted_at=? WHERE id=? AND submitted_at IS NULL AND revision=?",
+      "UPDATE entries SET answers=?,submitted_at=?,revision=revision+1 WHERE id=? AND submitted_at IS NULL AND revision=?",
     )
-    .run(new Date().toISOString(), req.entry.id, req.body.revision);
+    .run(
+      JSON.stringify(a),
+      new Date().toISOString(),
+      req.entry.id,
+      req.body.revision,
+    );
   if (!r.changes)
     return res.status(409).json({ error: "Submission conflict. Reload." });
   audit("submit", req.entry.id);
-  res.json({ ok: true });
+  res.json(
+    studentView(
+      db.prepare("SELECT * FROM entries WHERE id=?").get(req.entry.id),
+    ),
+  );
 });
 const entries = () =>
   db

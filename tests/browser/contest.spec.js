@@ -164,3 +164,119 @@ test("teacher rubric editor live total, persistence, invalidation and custom tea
   await expect(student.locator(".question-top")).toBeVisible();
   await ctx.close();
 });
+
+test("phone drafts stay local through offline reload and upload only on explicit successful submission", async ({
+  page,
+  request,
+}) => {
+  const writes = [];
+  page.on("request", (r) => {
+    if (r.method() !== "GET" && new URL(r.url()).pathname !== "/api/join")
+      writes.push(new URL(r.url()).pathname);
+  });
+  const auth = await (await request.get("/api/session")).json();
+  const login = await request.post("/api/admin/login", {
+    headers: { "x-csrf-token": auth.csrf },
+    data: { password: "Browser-test-password-2026!" },
+  });
+  expect(login.ok()).toBeTruthy();
+  await page.goto("/");
+  await page.locator("#group").fill("Echipa cu ciornă locală");
+  await page.locator("#members").fill("Ana și Matei");
+  await page.locator("#code").fill("PHONE-LOCAL-DRAFT-2026");
+  await page.locator("#join-form button").click();
+  await page
+    .locator("[data-field]")
+    .first()
+    .fill("Răspuns păstrat numai pe telefon");
+  await expect(page.locator("#save-status")).toContainText(
+    "Salvat pe acest dispozitiv",
+  );
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  const before = await (await request.get("/api/admin")).json();
+  const entry = before.entries.find(
+    (e) => e.group_name === "Echipa cu ciornă locală",
+  );
+  expect(entry.answers).toEqual({});
+  expect(writes).toEqual([]);
+  await page.context().setOffline(true);
+  await page.locator("#next").click();
+  await page.locator("[data-field]").first().fill("Bosch — completat offline");
+  await page.reload();
+  await expect(page.locator(".question-top .eyebrow")).toHaveText(
+    "EXERCIȚIUL 02 / 12",
+  );
+  await expect(page.locator("[data-field]").first()).toHaveValue(
+    "Bosch — completat offline",
+  );
+  await page.locator('[data-step="0"]').click();
+  await expect(page.locator("[data-field]").first()).toHaveValue(
+    "Răspuns păstrat numai pe telefon",
+  );
+  for (let i = 0; i < 12; i++) {
+    await expect(page.locator(".question-top .eyebrow")).toHaveText(
+      `EXERCIȚIUL ${String(i + 1).padStart(2, "0")} / 12`,
+    );
+    for (const field of await page.locator("[data-field]").all())
+      await field.fill("Răspuns completat local și argumentat.");
+    if (i === 8) await page.locator("[data-emotion]").first().check();
+    await page.locator("#next").click();
+  }
+  await page.locator("#final-submit").click();
+  await page.locator("#confirm-ok").click();
+  await expect(page.locator("#toast")).toContainText(
+    "Trimiterea nu a fost confirmată",
+  );
+  expect(
+    await page.evaluate(
+      (id) => !!localStorage.getItem("prado.draft." + id),
+      entry.id,
+    ),
+  ).toBe(true);
+  expect(
+    (await (await request.get("/api/admin")).json()).entries.find(
+      (e) => e.id === entry.id,
+    ).answers,
+  ).toEqual({});
+  await page.context().setOffline(false);
+  // A rejected submit also leaves the entire local draft intact.
+  await page.route("**/api/submit", (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Temporary failure" }),
+    }),
+  );
+  await page.locator("#final-submit").click();
+  await page.locator("#confirm-ok").click();
+  await expect(page.locator("#toast")).toContainText("Temporary failure");
+  expect(
+    await page.evaluate(
+      (id) => !!localStorage.getItem("prado.draft." + id),
+      entry.id,
+    ),
+  ).toBe(true);
+  expect(
+    (await (await request.get("/api/admin")).json()).entries.find(
+      (e) => e.id === entry.id,
+    ).answers,
+  ).toEqual({});
+  await page.unroute("**/api/submit");
+  await page.locator("#final-submit").click();
+  await page.locator("#confirm-ok").click();
+  await expect(page.locator("h1")).toContainText("Arta rămâne");
+  const end = (await (await request.get("/api/admin")).json()).entries.find(
+    (e) => e.id === entry.id,
+  );
+  expect(end.submitted_at).toBeTruthy();
+  expect(Object.keys(end.answers)).toHaveLength(12);
+  expect(
+    await page.evaluate(
+      (id) => localStorage.getItem("prado.draft." + id),
+      entry.id,
+    ),
+  ).toBe(null);
+  expect(writes).not.toContain("/api/progress");
+  expect(writes.filter((x) => x === "/api/submit")).toHaveLength(2); // rejected request + successful request
+});

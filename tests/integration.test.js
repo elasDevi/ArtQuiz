@@ -120,13 +120,13 @@ test("Full persistent contest lifecycle, authorization, concurrency, validation 
       },
     ]),
   );
-  await student.req("/api/progress", "PUT", { answers, revision: 0 });
-  await student.req("/api/progress", "PUT", { answers, revision: 0 }, 409);
+  await student.req("/api/progress", "PUT", { answers, revision: 0 }, 410);
+  await student.req("/api/progress", "PUT", { answers, revision: 0 }, 410);
   await stop();
   await start();
   const recovered = await student.req("/api/progress");
-  assert.deepEqual(recovered.answers, answers);
-  assert.equal(recovered.revision, 1);
+  assert.deepEqual(recovered.answers, {});
+  assert.equal(recovered.revision, 0);
   const resume = client();
   await resume.req("/api/session");
   assert.equal(
@@ -140,9 +140,25 @@ test("Full persistent contest lifecycle, authorization, concurrency, validation 
     joined.id,
   );
   assert.equal((await teacher.req("/api/admin")).entries.length, 1);
-  await student.req("/api/submit", "POST", { revision: 1 });
+  await student.req(
+    "/api/submit",
+    "POST",
+    { answers: { ...answers, 99: { invalid: "extra" } }, revision: 0 },
+    400,
+  );
+  await student.req("/api/submit", "POST", { answers, revision: 9 }, 409);
+  assert.deepEqual((await student.req("/api/progress")).answers, {});
+  const receipt = await student.req("/api/submit", "POST", {
+    answers,
+    revision: 0,
+  });
+  assert.ok(receipt.submittedAt);
+  assert.deepEqual(receipt.answers, answers);
+  await stop();
+  await start();
+  assert.deepEqual((await student.req("/api/progress")).answers, answers);
   await student.req("/api/submit", "POST", { revision: 1 }, 409);
-  await student.req("/api/progress", "PUT", { answers, revision: 1 }, 409);
+  await student.req("/api/progress", "PUT", { answers, revision: 1 }, 410);
   await teacher.req("/api/admin/winner", "POST", { group: "Grupa 1" }, 409);
   await teacher.req(`/api/admin/entries/${joined.id}/ai`, "POST", {}, 503);
   const d = await teacher.req("/api/admin"),

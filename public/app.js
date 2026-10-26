@@ -10,9 +10,7 @@ let lang = localStorage.getItem("prado.lang") || "ro",
   progress = null,
   step = 0,
   dirty = false,
-  saving = false,
   navigating = false,
-  saveTimer,
   adminData,
   selectedId = null,
   adminTab = "entries";
@@ -111,7 +109,7 @@ function render() {
   renderHome();
 }
 function renderHome() {
-  root.innerHTML = `<section class="hero"><div class="hero-text"><span class="eyebrow">${escape(content.museum)}</span><h1>${tr("Arta de a privi.<br><em>Bucuria de a descoperi.</em>", "The art of looking.<br><em>The joy of discovery.</em>")}</h1><p class="intro">${tr("Un muzeu. Sute de povești. O provocare pentru echipa ta. Descoperă capodoperele Prado și lasă arta să-ți pună întrebări.", "One museum. Hundreds of stories. A challenge for your team. Discover Prado’s masterpieces and let art ask the questions.")}</p><div class="pill"><span class="dot"></span>${open ? tr("CONCURS DESCHIS", "CHALLENGE OPEN") : tr("CONCURS ÎNCHIS", "CHALLENGE CLOSED")}</div><div class="facts"><div><b>${content.questions.length}</b>${tr("exerciții de explorat", "exercises to explore")}</div><div><b>100</b>${tr("de puncte posibile", "possible points")}</div><div><b>RO / EN</b>${tr("două limbi, aceeași artă", "two languages, one art")}</div></div></div><div class="hero-art"><img src="/images/page1-2.jpeg" alt="Detaliu din Coborârea de pe cruce, Rogier van der Weyden"><div class="seal"><b>✦</b>${tr("PRIVEȘTE<br>MAI ATENT", "LOOK<br>CLOSER")}</div><div class="hero-caption"><span>ROGIER VAN DER WEYDEN · C. 1435</span><p>${tr("Fiecare detaliu spune o poveste.", "Every detail tells a story.")}</p></div></div></section>${window.winner ? `<div class="winner"><span class="eyebrow">${tr("REZULTAT FINAL VALIDAT", "VALIDATED FINAL RESULT")}</span><h2>${escape(window.winner.group)}</h2><p>${window.winner.total} / 100</p></div>` : ""}<section class="join" id="join"><div><span class="eyebrow">01 · ${tr("ÎNCEPE EXPLORAREA", "START EXPLORING")}</span><h2>${tr("Echipa ta.<br>Perspectiva voastră.", "Your team.<br>Your perspective.")}</h2><p class="muted">${tr("Alege un nume unic pentru echipă, descrie membrii și păstrează codul pentru a relua răspunsurile. Numărul de echipe nu este limitat.", "Choose a unique team name, describe its members and keep your code to resume. There is no fixed number of teams.")}</p><p class="help">${tr("Fără conturi individuale. Folosește doar prenumele membrilor. Păstrează codul în echipă: acesta oferă acces la răspunsurile voastre.", "No individual accounts. Use members’ first names only. Keep the code within your team: it grants access to your answers.")}</p></div><form id="join-form" class="card"><div class="field"><label for="join-mode">${tr("Participare", "Entry")}</label><select id="join-mode"><option value="register">${tr("Înscrie o echipă nouă", "Register a new team")}</option><option value="resume">${tr("Reia participarea unei echipe", "Resume your team’s entry")}</option></select></div><div class="form-row"><div class="field"><label for="group">${tr("Numele echipei", "Team name")}</label><input id="group" required minlength="2" maxlength="80" autocomplete="organization" placeholder="${tr("Ex. Exploratorii Prado", "e.g. Prado Explorers")}"></div><div class="field"><label for="code">${tr("Codul echipei", "Team code")}</label><input id="code" required minlength="6" maxlength="40" pattern="[A-Za-z0-9-]{6,40}" autocomplete="off" placeholder="ex. PRADO-7K29" aria-describedby="code-help"></div></div><div class="field" id="members-field"><label for="members">${tr("Descrierea echipei și membrii", "Team description and members")}</label><textarea id="members" required minlength="2" maxlength="1500" placeholder="${tr("Prenumele membrilor și o scurtă descriere a echipei", "Members’ first names and a short team description")}"></textarea></div><p class="help" id="code-help">${tr("6–40 litere sau cifre. Recomandăm minimum 10 caractere aleatorii. Un cod = o participare.", "6–40 letters or numbers. At least 10 random characters recommended. One code = one entry.")}</p><p class="error-text" id="join-error"></p><button class="wide" ${!open ? "disabled" : ""}>${tr("Intră în provocare", "Enter the challenge")} <span>→</span></button>${!open ? `<p class="help">${tr("Concursul este închis. Profesoara îl poate redeschide.", "The challenge is closed. Your teacher can reopen it.")}</p>` : ""}<p class="help">${tr("Răspunsurile se salvează automat cât timp ești conectat. Trimiterea finală blochează modificările.", "Answers save automatically while connected. Final submission locks your entry.")}</p></form></section>`;
+  root.innerHTML = `<section class="hero"><div class="hero-text"><span class="eyebrow">${escape(content.museum)}</span><h1>${tr("Arta de a privi.<br><em>Bucuria de a descoperi.</em>", "The art of looking.<br><em>The joy of discovery.</em>")}</h1><p class="intro">${tr("Un muzeu. Sute de povești. O provocare pentru echipa ta. Descoperă capodoperele Prado și lasă arta să-ți pună întrebări.", "One museum. Hundreds of stories. A challenge for your team. Discover Prado’s masterpieces and let art ask the questions.")}</p><div class="pill"><span class="dot"></span>${open ? tr("CONCURS DESCHIS", "CHALLENGE OPEN") : tr("CONCURS ÎNCHIS", "CHALLENGE CLOSED")}</div><div class="facts"><div><b>${content.questions.length}</b>${tr("exerciții de explorat", "exercises to explore")}</div><div><b>100</b>${tr("de puncte posibile", "possible points")}</div><div><b>RO / EN</b>${tr("două limbi, aceeași artă", "two languages, one art")}</div></div></div><div class="hero-art"><img src="/images/page1-2.jpeg" alt="Detaliu din Coborârea de pe cruce, Rogier van der Weyden"><div class="seal"><b>✦</b>${tr("PRIVEȘTE<br>MAI ATENT", "LOOK<br>CLOSER")}</div><div class="hero-caption"><span>ROGIER VAN DER WEYDEN · C. 1435</span><p>${tr("Fiecare detaliu spune o poveste.", "Every detail tells a story.")}</p></div></div></section>${window.winner ? `<div class="winner"><span class="eyebrow">${tr("REZULTAT FINAL VALIDAT", "VALIDATED FINAL RESULT")}</span><h2>${escape(window.winner.group)}</h2><p>${window.winner.total} / 100</p></div>` : ""}<section class="join" id="join"><div><span class="eyebrow">01 · ${tr("ÎNCEPE EXPLORAREA", "START EXPLORING")}</span><h2>${tr("Echipa ta.<br>Perspectiva voastră.", "Your team.<br>Your perspective.")}</h2><p class="muted">${tr("Alege un nume unic pentru echipă și descrie membrii. Codul permite accesul la participare; răspunsurile netrimise se reiau numai pe dispozitivul unde au fost completate. Numărul de echipe nu este limitat.", "Choose a unique team name and describe its members. Your code grants access to the entry; unsent answers stay on the device where they were written. There is no fixed number of teams.")}</p><p class="help">${tr("Fără conturi individuale. Folosește doar prenumele membrilor. Păstrează codul în echipă: acesta oferă acces la răspunsurile voastre.", "No individual accounts. Use members’ first names only. Keep the code within your team: it grants access to your answers.")}</p></div><form id="join-form" class="card"><div class="field"><label for="join-mode">${tr("Participare", "Entry")}</label><select id="join-mode"><option value="register">${tr("Înscrie o echipă nouă", "Register a new team")}</option><option value="resume">${tr("Reia participarea unei echipe", "Resume your team’s entry")}</option></select></div><div class="form-row"><div class="field"><label for="group">${tr("Numele echipei", "Team name")}</label><input id="group" required minlength="2" maxlength="80" autocomplete="organization" placeholder="${tr("Ex. Exploratorii Prado", "e.g. Prado Explorers")}"></div><div class="field"><label for="code">${tr("Codul echipei", "Team code")}</label><input id="code" required minlength="6" maxlength="40" pattern="[A-Za-z0-9-]{6,40}" autocomplete="off" placeholder="ex. PRADO-7K29" aria-describedby="code-help"></div></div><div class="field" id="members-field"><label for="members">${tr("Descrierea echipei și membrii", "Team description and members")}</label><textarea id="members" required minlength="2" maxlength="1500" placeholder="${tr("Prenumele membrilor și o scurtă descriere a echipei", "Members’ first names and a short team description")}"></textarea></div><p class="help" id="code-help">${tr("6–40 litere sau cifre. Recomandăm minimum 10 caractere aleatorii. Un cod = o participare.", "6–40 letters or numbers. At least 10 random characters recommended. One code = one entry.")}</p><p class="error-text" id="join-error"></p><button class="wide" ${!open ? "disabled" : ""}>${tr("Intră în provocare", "Enter the challenge")} <span>→</span></button>${!open ? `<p class="help">${tr("Concursul este închis. Profesoara îl poate redeschide.", "The challenge is closed. Your teacher can reopen it.")}</p>` : ""}<p class="help">${tr("Răspunsurile se salvează automat doar pe acest telefon, în acest browser. Se trimit serverului numai la „Trimite”. Pentru înscriere și trimitere ai nevoie de internet.", "Answers save automatically only on this device, in this browser. They reach the server only when you submit. Registration and submission require internet.")}</p></form></section>`;
   $("#join-mode").onchange = () => {
     const resume = $("#join-mode").value === "resume";
     $("#members-field").classList.toggle("hidden", resume);
@@ -129,6 +127,7 @@ function renderHome() {
         });
         step = 0;
         dirty = false;
+        await restoreLocalDraft();
         render();
         window.scrollTo(0, 0);
       } catch (err) {
@@ -141,62 +140,96 @@ const complete = (q) =>
   q.fields.every((f) => progress.answers[q.id]?.[f.key]?.trim()) &&
   (!q.emotions || progress.answers[q.id]?.emotions?.length);
 const completed = () => content.questions.filter(complete).length;
+const draftKey = (id) => "prado.draft." + id;
+const activeKey = "prado.activeDraft";
 function statusText() {
   const el = $("#save-status");
   if (el)
-    el.textContent = saving
-      ? tr("Se salvează…", "Saving…")
-      : dirty
-        ? tr("Modificări nesalvate", "Unsaved changes")
-        : tr("✓ Salvat pe server", "✓ Saved on server");
+    el.textContent = dirty
+      ? tr(
+          "Nu s-a putut salva pe dispozitiv. Nu închide pagina.",
+          "Device save failed. Keep this page open.",
+        )
+      : tr(
+          "✓ Salvat pe acest dispozitiv · netrimis",
+          "✓ Saved on this device · not submitted",
+        );
 }
 async function save() {
-  clearTimeout(saveTimer);
-  if (saving) {
-    await new Promise((r) => setTimeout(r, 100));
-    return save();
-  }
-  if (!dirty || !progress || progress.submittedAt) return;
-  saving = true;
-  statusText();
-  const answers = structuredClone(progress.answers);
+  if (!progress || progress.submittedAt) return;
   try {
-    const r = await api("/api/progress", "PUT", {
-      answers,
-      revision: progress.revision,
-    });
-    progress.revision = r.revision;
-    if (JSON.stringify(progress.answers) === JSON.stringify(answers)) {
-      dirty = false;
-      localStorage.removeItem("prado.backup." + progress.id);
-    }
+    localStorage.setItem(
+      draftKey(progress.id),
+      JSON.stringify({ progress, content, open, step, at: Date.now() }),
+    );
+    localStorage.setItem(activeKey, progress.id);
+    dirty = false;
+  } catch {
+    dirty = true;
+    throw Error(
+      tr(
+        "Stocarea locală nu este disponibilă sau este plină. Nu închide pagina înainte de trimitere.",
+        "Local storage is unavailable or full. Keep this page open until you submit.",
+      ),
+    );
   } finally {
-    saving = false;
     statusText();
   }
 }
 function schedule() {
   dirty = true;
-  localStorage.setItem(
-    "prado.backup." + progress.id,
-    JSON.stringify({ answers: progress.answers, at: Date.now() }),
-  );
-  statusText();
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(
-    () =>
-      save().catch((e) => {
-        const s = $("#save-status");
-        if (s)
-          s.textContent = tr(
-            "Nesalvat. Verifică internetul și apasă Salvează.",
-            "Not saved. Check your connection and press Save.",
-          );
-        toast(e.message);
-      }),
-    900,
-  );
+  save().catch((e) => toast(e.message));
   updateSteps();
+}
+async function restoreLocalDraft() {
+  if (!progress || progress.submittedAt) return;
+  try {
+    const raw = localStorage.getItem(draftKey(progress.id));
+    const legacy = localStorage.getItem("prado.backup." + progress.id);
+    const local = raw
+      ? JSON.parse(raw)
+      : legacy
+        ? {
+            progress: { ...progress, answers: JSON.parse(legacy).answers },
+            step: 0,
+          }
+        : null;
+    if (
+      local?.progress?.id === progress.id &&
+      local.progress.answers &&
+      typeof local.progress.answers === "object" &&
+      !Array.isArray(local.progress.answers)
+    ) {
+      if (
+        local.progress.revision !== progress.revision &&
+        !(await confirm(
+          tr("Recuperezi ciorna locală?", "Recover the local draft?"),
+          tr(
+            "Există o versiune mai nouă pe server. Poți păstra răspunsurile de pe acest dispozitiv pentru trimiterea finală.",
+            "The server has a newer version. You may keep this device’s draft for final submission.",
+          ),
+        ))
+      )
+        return;
+      progress.answers = local.progress.answers;
+      step = Math.min(
+        Math.max(0, Number(local.step) || 0),
+        content.questions.length,
+      );
+    }
+    await save();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+function clearSubmittedDraft(id) {
+  try {
+    localStorage.removeItem(draftKey(id));
+    localStorage.removeItem("prado.backup." + id);
+    if (localStorage.getItem(activeKey) === id)
+      localStorage.removeItem(activeKey);
+  } catch {}
+  dirty = false;
 }
 function updateSteps() {
   const n = completed();
@@ -214,6 +247,7 @@ async function move(next) {
   try {
     await save();
     step = next;
+    await save();
     renderQuestion();
     $("#question-area").scrollIntoView({ block: "start", behavior: "smooth" });
   } catch (e) {
@@ -232,6 +266,9 @@ function renderQuestion() {
     busy($("#leave"), async () => {
       await save();
       await api("/api/logout", "POST");
+      try {
+        localStorage.removeItem(activeKey);
+      } catch {}
       progress = null;
       session = await api("/api/session");
       csrf = session.csrf;
@@ -261,7 +298,12 @@ function renderQuestion() {
     $("#save-now").onclick = () =>
       busy($("#save-now"), async () => {
         await save();
-        toast(tr("Progres salvat", "Progress saved"));
+        toast(
+          tr(
+            "Progres salvat pe acest dispozitiv",
+            "Progress saved on this device",
+          ),
+        );
       });
   } else {
     $$("[data-edit]").forEach(
@@ -280,9 +322,42 @@ function renderQuestion() {
           ))
         )
           return;
-        await api("/api/submit", "POST", { revision: progress.revision });
-        progress = await api("/api/progress");
-        renderSubmitted();
+        try {
+          const currentSession = await api("/api/session");
+          csrf = currentSession.csrf;
+          const current = await api("/api/progress");
+          if (current.id !== progress.id)
+            throw Error(
+              tr(
+                "Reintră cu numele și codul acestei echipe. Ciorna rămâne pe acest dispozitiv.",
+                "Resume using this team’s name and code. The draft remains on this device.",
+              ),
+            );
+          if (current.submittedAt) {
+            progress = current;
+            toast(
+              tr(
+                "Participarea a fost deja trimisă. Se afișează confirmarea de pe server.",
+                "This entry was already submitted. Showing the server confirmation.",
+              ),
+            );
+            renderSubmitted();
+            return;
+          }
+          progress = await api("/api/submit", "POST", {
+            answers: progress.answers,
+            revision: progress.revision,
+          });
+          clearSubmittedDraft(progress.id);
+          renderSubmitted();
+        } catch (e) {
+          throw Error(
+            tr(
+              "Trimiterea nu a fost confirmată. Răspunsurile rămân pe acest dispozitiv; verifică internetul și reîncearcă. ",
+              "Submission was not confirmed. Your draft remains on this device; check your connection and retry. ",
+            ) + e.message,
+          );
+        }
       });
   }
   statusText();
@@ -306,7 +381,7 @@ function questionMarkup(q) {
           )
           .join("")}</div></div>`
       : ""
-  }<div class="actions"><button id="save-now" class="secondary">${tr("Salvează acum", "Save now")}</button><span class="save-status" id="save-status"></span></div><div class="actions question-nav"><button class="secondary" id="previous" ${step === 0 ? "disabled" : ""}>← ${tr("Înapoi", "Back")}</button><button id="next">${step === content.questions.length - 1 ? tr("Verifică răspunsurile", "Review answers") : tr("Mai departe", "Continue")} →</button></div>`;
+  }<div class="actions"><button id="save-now" class="secondary">${tr("Salvează pe dispozitiv", "Save on device")}</button><span class="save-status" id="save-status"></span></div><div class="actions question-nav"><button class="secondary" id="previous" ${step === 0 ? "disabled" : ""}>← ${tr("Înapoi", "Back")}</button><button id="next">${step === content.questions.length - 1 ? tr("Verifică răspunsurile", "Review answers") : tr("Mai departe", "Continue")} →</button></div>`;
 }
 function summaryMarkup() {
   return `<span class="eyebrow">${tr("ULTIMUL PAS", "ONE LAST STEP")}</span><h2>${tr("O ultimă privire.", "One last look.")}</h2><p class="muted">${tr("Verifică răspunsurile înainte de trimitere.", "Review your answers before submitting.")}</p><div class="summary-list">${content.questions.map((q, i) => `<div class="summary-row"><span>${q.id}. ${escape(q[lang])}<br><small class="muted">${complete(q) ? tr("✓ Completat", "✓ Complete") : tr("○ Mai sunt câmpuri de completat", "○ Some fields are missing")}</small></span><button class="secondary" data-edit="${i}">${tr("Verifică", "Review")}</button></div>`).join("")}</div><p class="help">${tr("Poți trimite o singură dată pentru acest cod.", "You can only submit once with this code.")}</p><button class="wide" id="final-submit" ${completed() !== content.questions.length || !open ? "disabled" : ""}>${tr("Trimite răspunsurile finale", "Submit final answers")} →</button>`;
@@ -455,7 +530,7 @@ function renderEntryDetail() {
   }
   const qs = adminData.content.questions;
   $("#entry-detail").innerHTML =
-    `<div class="review-head"><div><span class="eyebrow">${e.submitted_at ? tr("PARTICIPARE TRIMISĂ", "SUBMITTED ENTRY") : tr("CIORNĂ · DOAR CITIRE", "DRAFT · READ ONLY")}</span><h2>${escape(e.group_name)}</h2><p class="subtitle">${escape(e.members || tr("Membri nespecificați", "Members not specified"))}</p><p class="subtitle">ID ${e.id.slice(0, 8)} · ${e.submitted_at ? escape(new Date(e.submitted_at).toLocaleString()) : tr("În lucru", "In progress")}</p></div><div class="total"><span id="score-total">${e.scores ? evaluationTotal(e.scores) : "—"}</span><small> / 100</small></div></div>${e.validated ? `<div class="notice success">${tr("Rezultat validat de profesoară. Orice modificare invalidează desemnarea câștigătorului.", "Teacher-validated result. Changes reset the winner announcement.")}</div>` : ""}${e.submitted_at ? `<button id="ai-score" class="secondary" ${e.validated || !adminData.aiConfigured ? "disabled" : ""}>✦ ${tr("Propune evaluare cu AI", "Suggest scores with AI")}</button><p class="help">${adminData.aiConfigured ? tr("Răspunsurile vor fi trimise serviciului AI configurat. Verifică toate propunerile înainte de validare.", "Answers will be sent to the configured AI service. Review every proposal before validation.") : tr("AI nu este configurat. Adaugă AI_API_KEY pe server pentru evaluare automată. Evaluarea manuală funcționează acum.", "AI is not configured. Add AI_API_KEY on the server for automated assessment. Manual assessment is available now.")}</p>` : ""}<form id="scores-form">${qs
+    `<div class="review-head"><div><span class="eyebrow">${e.submitted_at ? tr("PARTICIPARE TRIMISĂ", "SUBMITTED ENTRY") : tr("CIORNĂ · DOAR CITIRE", "DRAFT · READ ONLY")}</span><h2>${escape(e.group_name)}</h2><p class="subtitle">${escape(e.members || tr("Membri nespecificați", "Members not specified"))}</p><p class="subtitle">ID ${e.id.slice(0, 8)} · ${e.submitted_at ? escape(new Date(e.submitted_at).toLocaleString()) : tr("În lucru", "In progress")}</p></div><div class="total"><span id="score-total">${e.scores ? evaluationTotal(e.scores) : "—"}</span><small> / 100</small></div></div>${e.validated ? `<div class="notice success">${tr("Rezultat validat de profesoară. Orice modificare invalidează desemnarea câștigătorului.", "Teacher-validated result. Changes reset the winner announcement.")}</div>` : ""}${e.submitted_at ? `<button id="ai-score" class="secondary" ${e.validated || !adminData.aiConfigured ? "disabled" : ""}>✦ ${tr("Propune evaluare cu AI", "Suggest scores with AI")}</button><p class="help">${adminData.aiConfigured ? tr("Răspunsurile vor fi trimise serviciului AI configurat. Verifică toate propunerile înainte de validare.", "Answers will be sent to the configured AI service. Review every proposal before validation.") : tr("AI nu este configurat. Adaugă AI_API_KEY pe server pentru evaluare automată. Evaluarea manuală funcționează acum.", "AI is not configured. Add AI_API_KEY on the server for automated assessment. Manual assessment is available now.")}</p>` : `<div class="notice">${tr("Răspunsurile în curs de completare se salvează doar pe dispozitivul echipei. Ele vor apărea aici după trimiterea finală.", "Answers in progress stay on the team’s device. They appear here after final submission.")}</div>`}<form id="scores-form">${qs
       .map((q) => {
         const s = e.scores?.find((x) => x.id === q.id),
           a = e.answers[q.id] || {};
@@ -617,29 +692,37 @@ async function init() {
     window.winner = c.winner;
     if (location.pathname !== "/admin" && session.student) {
       progress = await api("/api/progress");
-      const backup = localStorage.getItem("prado.backup." + progress.id);
-      if (backup && !progress.submittedAt) {
-        const local = JSON.parse(backup);
-        if (
-          await confirm(
-            tr("Recuperezi modificările locale?", "Recover local changes?"),
-            tr(
-              "Există răspunsuri care nu au fost salvate pe server de acest dispozitiv.",
-              "This device has answers that were not saved to the server.",
-            ),
-          )
-        ) {
-          progress.answers = local.answers;
-          dirty = true;
-        }
-      }
+      await restoreLocalDraft();
     }
     render();
   } catch (e) {
+    if (location.pathname !== "/admin") {
+      try {
+        const id = localStorage.getItem(activeKey),
+          cached =
+            id && JSON.parse(localStorage.getItem(draftKey(id)) || "null");
+        if (cached?.progress?.id === id && cached.content?.questions) {
+          content = cached.content;
+          open = cached.open;
+          progress = cached.progress;
+          step = Number(cached.step) || 0;
+          render();
+          toast(
+            tr(
+              "Mod offline: ciorna rămâne pe acest dispozitiv. Trimiterea necesită internet.",
+              "Offline: your draft stays on this device. Submission requires internet.",
+            ),
+          );
+          return;
+        }
+      } catch {}
+    }
     root.innerHTML = `<section class="card center"><h2>${tr("Conexiune întreruptă", "Connection interrupted")}</h2><p>${escape(e.message)}</p><button id="retry">${tr("Reîncearcă", "Retry")}</button></section>`;
     $("#retry").onclick = init;
   }
 }
+if ("serviceWorker" in navigator)
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
 init();
 
 function renderRubric() {
