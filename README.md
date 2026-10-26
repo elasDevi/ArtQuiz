@@ -21,6 +21,17 @@ Nu este necesar un setup token. După autentificare, schimbă parola din **Concu
 
 **O instalare existentă își păstrează parola**; actualizarea nu o înlocuiește cu parola implicită. Modificările persistă după repornire. `ADMIN_PASSWORD` sau `ADMIN_PASSWORD_HASH` pot seta o parolă personalizată numai la inițializarea unei baze noi; nu suprascriu ulterior parola schimbată în aplicație. Fostul fișier `.setup-token`, dacă există într-o instalare veche, nu mai este folosit.
 
+### Dacă parola inițială nu funcționează
+
+Pe o instalare deja configurată se păstrează parola anterioară. Pentru resetare locală, fără pierderea echipelor, răspunsurilor sau baremului:
+
+1. Actualizează fișierele aplicației păstrând folderul `data` și `.env`.
+2. Oprește aplicația cu Ctrl+C.
+3. Din folderul aplicației rulează `npm run reset-admin`, apoi `node local-test.js`.
+4. Intră cu utilizatorul `profesor` și parola `Madridtoledo2026`.
+
+Comanda citește `.env` și folosește același `DATA_DIR` ca serverul. Modifică doar parola și indicatorul parolei inițiale, invalidează sesiunile profesorului și înregistrează resetarea în audit. Nu șterge baza de date și nu modifică participările sau baremul.
+
 ## Fluxul elevilor
 
 1. Introdu un nume unic de echipă, descrierea cu membrii (preferabil prenume) și creează un cod unic (6–40 caractere, recomandat 10+ aleatorii). Pentru reluare selectează „Reia participarea” și introdu numele și codul, indiferent de majuscule; păstrați codul în echipă. Numele este unic după normalizarea majusculelor și spațiilor suplimentare. Numărul echipelor nu este fix. Codul este un secret de acces, nu un simplu număr public.

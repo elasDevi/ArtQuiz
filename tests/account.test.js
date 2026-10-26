@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -175,6 +175,48 @@ test("Default profesor account, password updates, session revocation and restart
       password: change.newPassword,
     });
     assert.equal((await fresh.req("/api/admin")).username, "profesor");
+    await stop();
+    const beforeDB = new DatabaseSync(path.join(dir, "prado.sqlite"));
+    const preserved = {
+      entries: beforeDB.prepare("SELECT * FROM entries ORDER BY id").all(),
+      content: beforeDB
+        .prepare("SELECT value FROM settings WHERE key='content'")
+        .get(),
+    };
+    beforeDB.close();
+    const reset = spawnSync(process.execPath, ["reset-admin.js"], {
+      env: { ...process.env, DATA_DIR: dir },
+      encoding: "utf8",
+    });
+    assert.equal(reset.status, 0, reset.stderr);
+    const afterDB = new DatabaseSync(path.join(dir, "prado.sqlite"));
+    assert.deepEqual(
+      afterDB.prepare("SELECT * FROM entries ORDER BY id").all(),
+      preserved.entries,
+    );
+    assert.deepEqual(
+      afterDB.prepare("SELECT value FROM settings WHERE key='content'").get(),
+      preserved.content,
+    );
+    afterDB.close();
+    await start("A-different-bootstrap-password!");
+    const recovered = client();
+    await recovered.req("/api/session");
+    await recovered.req(
+      "/api/admin/login",
+      "POST",
+      { username: "profesor", password: change.newPassword },
+      401,
+    );
+    await recovered.req("/api/admin/login", "POST", {
+      username: "profesor",
+      password: "Madridtoledo2026",
+    });
+    assert.equal((await recovered.req("/api/admin")).usesDefaultPassword, true);
+    assert.equal(
+      (await student.req("/api/progress")).group,
+      "Elevii cu sesiune păstrată",
+    );
   } finally {
     await stop();
     rmSync(dir, { recursive: true, force: true });

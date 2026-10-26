@@ -68,7 +68,7 @@ test("mobile system themes, bilingual worksheet, submission and teacher validati
   admin.on("pageerror", (e) => errors.push(e.message));
   await admin.goto("http://127.0.0.1:3499/admin");
   await admin.locator("#password").fill("Browser-test-password-2026!");
-  await admin.locator("#login-form button").click();
+  await admin.locator("#login-form button[type=submit]").click();
   await expect(admin.locator(".stats")).toBeVisible();
   await admin.locator("[data-entry]").first().click();
   for (const input of await admin.locator("[data-score]").all())
@@ -97,7 +97,7 @@ test("teacher rubric editor live total, persistence, invalidation and custom tea
 }) => {
   await page.goto("/admin");
   await page.locator("#password").fill("Browser-test-password-2026!");
-  await page.locator("#login-form button").click();
+  await page.locator("#login-form button[type=submit]").click();
   await page.locator("[data-tab=rubric]").click();
   await expect(page.locator("[data-rubric-points]")).toHaveCount(12);
   await expect(page.locator("#rubric-total")).toHaveText("100");
@@ -317,11 +317,21 @@ test("incomplete form can be submitted after an explicit warning, or cancelled w
   await page.locator("#final-submit").click();
   await page.locator("#confirm-ok").click();
   await expect(page.locator("h1")).toContainText("Arta rămâne");
+  await expect(page.locator("#app")).toContainText(
+    "Formularul a fost trimis pentru evaluare",
+  );
   entry = (await (await request.get("/api/admin")).json()).entries.find(
     (e) => e.id === entry.id,
   );
   expect(entry.answers).toEqual({ 1: { artist: "Diego Velázquez" } });
   expect(entry.submitted_at).toBeTruthy();
+  await page.goto("/admin");
+  await page.locator("#password").fill("Browser-test-password-2026!");
+  await page.locator("#login-form button[type=submit]").click();
+  await page.locator(`[data-entry="${entry.id}"]`).click();
+  await expect(page.locator("#scores-form")).toBeVisible();
+  await expect(page.locator("#entry-detail")).toContainText("Diego Velázquez");
+  await expect(page.locator("#validated")).not.toBeChecked();
 });
 
 test("teacher signs in as profesor and changes password from the dashboard", async ({
@@ -331,25 +341,39 @@ test("teacher signs in as profesor and changes password from the dashboard", asy
   await expect(page.locator("#username")).toHaveValue("profesor");
   await expect(page.locator("#setup-token")).toHaveCount(0);
   await page.locator("#password").fill("Browser-test-password-2026!");
-  await page.locator("#login-form button").click();
+  await expect(page.locator("#password")).toHaveAttribute("type", "password");
+  await page.locator('[data-password-toggle="password"]').click();
+  await expect(page.locator("#password")).toHaveAttribute("type", "text");
+  await expect(
+    page.locator('[data-password-toggle="password"]'),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#password")).toHaveValue(
+    "Browser-test-password-2026!",
+  );
+  await page.locator('[data-password-toggle="password"]').click();
+  await expect(page.locator("#password")).toHaveAttribute("type", "password");
+  await page.locator("#login-form button[type=submit]").click();
   await page.locator("[data-tab=settings]").click();
   await page.locator("#current-password").fill("Wrong-current-password");
   await page.locator("#new-password").fill("Browser-updated-password-2026!");
   await page
     .locator("#confirm-password")
     .fill("Browser-updated-password-2026!");
-  await page.locator("#password-form button").click();
+  await page.locator('[data-password-toggle="new-password"]').click();
+  await expect(page.locator("#new-password")).toHaveAttribute("type", "text");
+  await page.locator('[data-password-toggle="new-password"]').click();
+  await page.locator("#password-form button[type=submit]").click();
   await expect(page.locator("#password-error")).toContainText(
     "actuală este incorectă",
   );
   await page.locator("#current-password").fill("Browser-test-password-2026!");
-  await page.locator("#password-form button").click();
+  await page.locator("#password-form button[type=submit]").click();
   await expect(page.locator("#toast")).toContainText("Parola a fost schimbată");
   await page.locator("#logout").click();
   await page.locator("#password").fill("Browser-test-password-2026!");
-  await page.locator("#login-form button").click();
+  await page.locator("#login-form button[type=submit]").click();
   await expect(page.locator("#login-error")).toContainText("incorectă");
   await page.locator("#password").fill("Browser-updated-password-2026!");
-  await page.locator("#login-form button").click();
+  await page.locator("#login-form button[type=submit]").click();
   await expect(page.locator(".stats")).toBeVisible();
 });

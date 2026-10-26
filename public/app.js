@@ -394,17 +394,50 @@ function summaryMarkup() {
   return `<span class="eyebrow">${tr("ULTIMUL PAS", "ONE LAST STEP")}</span><h2>${tr("O ultimă privire.", "One last look.")}</h2><p class="muted">${tr("Verifică răspunsurile înainte de trimitere.", "Review your answers before submitting.")}</p><div class="summary-list">${content.questions.map((q, i) => `<div class="summary-row"><span>${q.id}. ${escape(q[lang])}<br><small class="muted">${complete(q) ? tr("✓ Completat", "✓ Complete") : tr("○ Răspuns incomplet sau lipsă", "○ Incomplete or unanswered")}</small></span><button class="secondary" data-edit="${i}">${tr("Verifică", "Review")}</button></div>`).join("")}</div><p class="help">${tr("Poți trimite și dacă nu știi toate răspunsurile. Părțile necompletate primesc 0 puncte. Trimiterea este unică pentru acest cod.", "You may submit even if you do not know every answer. Unanswered parts receive 0 points. You can submit only once with this code.")}</p><button class="wide" id="final-submit" ${!open ? "disabled" : ""}>${tr("Trimite răspunsurile finale", "Submit final answers")} →</button>`;
 }
 function renderSubmitted() {
-  root.innerHTML = `<section class="center card"><div class="big-mark">✦</div><span class="eyebrow">${tr("PROVOCARE ÎNCHEIATĂ", "CHALLENGE COMPLETED")}</span><h1>${tr("Arta rămâne cu voi.", "Art stays with you.")}</h1><p>${tr("Răspunsurile au fost trimise cu succes. Profesoara le va evalua și va valida rezultatele înainte de desemnarea câștigătorului.", "Your answers have been submitted. Your teacher will assess and validate results before announcing a winner.")}</p><div class="notice success">${escape(progress.group)} · ${tr("Trimis", "Submitted")}: ${escape(new Date(progress.submittedAt).toLocaleString(lang === "ro" ? "ro-RO" : "en-GB"))}<br>ID: ${escape(progress.id.slice(0, 8))}</div><p class="help">${tr("Răspunsurile sunt salvate pe server și nu mai pot fi modificate.", "Your answers are stored on the server and can no longer be edited.")}</p><button id="home">${tr("Înapoi la început", "Back to the start")}</button></section>`;
+  root.innerHTML = `<section class="center card"><div class="big-mark">✦</div><span class="eyebrow">${tr("PROVOCARE ÎNCHEIATĂ", "CHALLENGE COMPLETED")}</span><h1>${tr("Arta rămâne cu voi.", "Art stays with you.")}</h1><p>${tr("Formularul a fost trimis pentru evaluare, inclusiv răspunsurile parțiale. Profesoara va evalua răspunsurile și va valida rezultatele înainte de desemnarea câștigătorului.", "Your form has been submitted for assessment, including any partial answers. Your teacher will assess and validate results before announcing a winner.")}</p><div class="notice success">${escape(progress.group)} · ${tr("Trimis", "Submitted")}: ${escape(new Date(progress.submittedAt).toLocaleString(lang === "ro" ? "ro-RO" : "en-GB"))}<br>ID: ${escape(progress.id.slice(0, 8))}</div><p class="help">${tr("Răspunsurile sunt salvate pe server și nu mai pot fi modificate.", "Your answers are stored on the server and can no longer be edited.")}</p><button id="home">${tr("Înapoi la început", "Back to the start")}</button></section>`;
   $("#home").onclick = () => {
     progress = null;
     renderHome();
   };
 }
+function addPasswordVisibility(scope = document) {
+  for (const input of $$('input[type="password"]', scope)) {
+    if (input.parentElement.classList.contains("password-wrap")) continue;
+    const wrap = document.createElement("div");
+    wrap.className = "password-wrap";
+    input.before(wrap);
+    wrap.append(input);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "password-toggle secondary";
+    button.dataset.passwordToggle = input.id;
+    button.setAttribute("aria-controls", input.id);
+    button.setAttribute("aria-pressed", "false");
+    const label = () => {
+      const shown = input.type === "text";
+      button.textContent = shown ? tr("Ascunde", "Hide") : tr("Arată", "Show");
+      button.setAttribute(
+        "aria-label",
+        shown
+          ? tr("Ascunde parola", "Hide password")
+          : tr("Arată parola", "Show password"),
+      );
+      button.setAttribute("aria-pressed", String(shown));
+    };
+    button.onclick = () => {
+      input.type = input.type === "password" ? "text" : "password";
+      label();
+    };
+    label();
+    wrap.append(button);
+  }
+}
 function renderLogin() {
-  root.innerHTML = `<section class="login card"><span class="eyebrow">${tr("SPAȚIUL PROFESOAREI", "TEACHER’S SPACE")}</span><h1>${tr("Bine ai revenit.", "Welcome back.")}</h1><p class="muted">${tr("Răspunsuri, evaluare și clasament — într-un singur loc.", "Answers, assessment and rankings — all in one place.")}</p><form id="login-form"><div class="field"><label for="username">${tr("Utilizator", "Username")}</label><input id="username" name="username" required autocomplete="username" value="profesor" maxlength="80"></div><div class="field"><label for="password">${tr("Parolă", "Password")}</label><input id="password" name="password" type="password" required maxlength="200" autocomplete="current-password"></div><p class="error-text" id="login-error"></p><button class="wide">${tr("Intră în panou", "Open dashboard")} →</button></form></section>`;
+  root.innerHTML = `<section class="login card"><span class="eyebrow">${tr("SPAȚIUL PROFESOAREI", "TEACHER’S SPACE")}</span><h1>${tr("Bine ai revenit.", "Welcome back.")}</h1><p class="muted">${tr("Răspunsuri, evaluare și clasament — într-un singur loc.", "Answers, assessment and rankings — all in one place.")}</p><form id="login-form"><div class="field"><label for="username">${tr("Utilizator", "Username")}</label><input id="username" name="username" required autocomplete="username" value="profesor" maxlength="80"></div><div class="field"><label for="password">${tr("Parolă", "Password")}</label><input id="password" name="password" type="password" required maxlength="200" autocomplete="current-password"></div><p class="error-text" id="login-error"></p><button type="submit" class="wide">${tr("Intră în panou", "Open dashboard")} →</button></form></section>`;
+  addPasswordVisibility($("#login-form"));
   $("#login-form").onsubmit = (e) => {
     e.preventDefault();
-    busy($("#login-form button"), async () => {
+    busy($("#login-form button[type=submit]"), async () => {
       try {
         const r = await api("/api/admin/login", "POST", {
           username: $("#username").value,
@@ -627,9 +660,10 @@ function renderSettings() {
     "beforeend",
     `<section class="card account-settings"><span class="eyebrow">${tr("CONTUL PROFESOAREI", "TEACHER ACCOUNT")}</span><h2>${tr("Schimbă parola", "Change password")}</h2><p class="help">${tr("Utilizator: profesor. Schimbarea parolei se păstrează după repornirea aplicației și deconectează celelalte sesiuni ale profesorului.", "Username: profesor. Password changes persist after restarting and sign out other teacher sessions.")}</p><form id="password-form"><div class="field"><label for="current-password">${tr("Parola actuală", "Current password")}</label><input id="current-password" type="password" required maxlength="200" autocomplete="current-password"></div><div class="form-row"><div class="field"><label for="new-password">${tr("Parola nouă", "New password")}</label><input id="new-password" type="password" required minlength="12" maxlength="200" autocomplete="new-password"></div><div class="field"><label for="confirm-password">${tr("Confirmă parola nouă", "Confirm new password")}</label><input id="confirm-password" type="password" required minlength="12" maxlength="200" autocomplete="new-password"></div></div><p class="help">${tr("Minimum 12 caractere.", "At least 12 characters.")}</p><p class="error-text" id="password-error" role="alert"></p><button type="submit">${tr("Salvează parola", "Save password")}</button></form></section>`,
   );
+  addPasswordVisibility($("#password-form"));
   $("#password-form").onsubmit = (e) => {
     e.preventDefault();
-    busy($("#password-form button"), async () => {
+    busy($("#password-form button[type=submit]"), async () => {
       $("#password-error").textContent = "";
       try {
         const result = await api("/api/admin/password", "POST", {
