@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#681f32" />
+    <meta
+      name="description"
+      content="Explorează Muzeul Prado într-un concurs de artă pentru elevi."
+    />
+    <title>Prado Art Challenge</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/" aria-label="Prado Art Challenge"
+        ><span class="brand-icon">P<span>✦</span></span
+        ><span>PRADO<span class="brand-sub">ART CHALLENGE</span></span></a
+      >
+      <nav>
+        <button id="language" class="quiet" aria-label="Change language">
+          EN</button
+        ><a href="/admin" id="admin-link" class="quiet">Profesori ↗</a>
+      </nav>
+    </header>
+    <main id="app"><p class="loading">Se pregătește vizita…</p></main>
+    <footer>
+      <span>PRADO ART CHALLENGE</span
+      ><span id="footnote">Privește. Descoperă. Creează conexiuni.</span>
+    </footer>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <dialog id="confirm">
+      <form method="dialog">
+        <span class="eyebrow">PRADO ART CHALLENGE</span>
+        <h2 id="confirm-title"></h2>
+        <p id="confirm-copy"></p>
+        <div class="actions">
+          <button value="cancel" class="secondary" id="confirm-cancel">
+            Înapoi</button
+          ><button value="ok" id="confirm-ok">Confirmă</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>
