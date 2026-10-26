@@ -5,6 +5,14 @@ globalThis.fetch = async (url, options) => {
     return realFetch(url, options);
   const request = JSON.parse(options.body),
     payload = JSON.parse(request.messages[1].content);
+  if (
+    !payload.questions.every(
+      (q) => typeof q.correctAnswer === "string" && q.correctAnswer,
+    )
+  )
+    throw Error("Missing configured reference answer");
+  if (JSON.stringify(payload.answers).includes("DELAY_FIXTURE"))
+    await new Promise((resolve) => setTimeout(resolve, 500));
   const invalid = JSON.stringify(payload.answers).includes("INVALID_FIXTURE");
   const scores = payload.questions.map((q) => ({
     id: q.id,

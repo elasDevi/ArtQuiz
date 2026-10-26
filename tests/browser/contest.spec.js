@@ -30,7 +30,8 @@ test("mobile system themes, bilingual worksheet, submission and teacher validati
   await page.locator("#language").click();
   await expect(page.locator("h1")).toContainText("The art of looking");
   await page.locator("#language").click();
-  await page.locator("#group").selectOption("Grupa 2");
+  await page.locator("#group").fill("Grupa 2");
+  await page.locator("#members").fill("Ana și Maria");
   await page.locator("#code").fill("BROWSER-" + Date.now());
   await page.locator("#join-form button").click();
   for (let i = 0; i < 12; i++) {
@@ -87,5 +88,79 @@ test("mobile system themes, bilingual worksheet, submission and teacher validati
   await admin.locator("#confirm-ok").click();
   await expect(admin.locator(".winner")).toContainText("Grupa 2");
   expect(errors).toEqual([]);
+  await ctx.close();
+});
+
+test("teacher rubric editor live total, persistence, invalidation and custom team duplicate message", async ({
+  page,
+  browser,
+}) => {
+  await page.goto("/admin");
+  await page.locator("#password").fill("Browser-test-password-2026!");
+  await page.locator("#login-form button").click();
+  await page.locator("[data-tab=rubric]").click();
+  await expect(page.locator("[data-rubric-points]")).toHaveCount(12);
+  await expect(page.locator("#rubric-total")).toHaveText("100");
+  await expect(page.locator("#rubric-bonus")).toHaveValue("10");
+  await expect(page.locator("#rubric-answer-2")).toContainText("Bosch");
+  await page.locator("#rubric-bonus").fill("11");
+  await expect(page.locator("#rubric-total")).toHaveText("101");
+  await expect(page.locator("#save-rubric")).toBeDisabled();
+  await page.locator("#rubric-points-1").fill("4");
+  await expect(page.locator("#rubric-total")).toHaveText("100");
+  await expect(page.locator("#save-rubric")).toBeEnabled();
+  await page
+    .locator("#rubric-answer-1")
+    .fill("Diego Velázquez; acceptă și Goya cu precizarea intrării.");
+  await page
+    .locator("#rubric-criteria-1")
+    .fill("4p pentru identificare corectă; acceptă echivalente.");
+  await page.locator("#save-rubric").click();
+  await page.locator("#confirm-ok").click();
+  await expect(page.locator("#toast")).toContainText("Barem salvat");
+  await page.reload();
+  await page.locator("[data-tab=rubric]").click();
+  await expect(page.locator("#rubric-points-1")).toHaveValue("4");
+  await expect(page.locator("#rubric-bonus")).toHaveValue("11");
+  await page.screenshot({
+    path: "/tmp/prado-rubric-mobile.png",
+    fullPage: true,
+  });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.locator("[data-tab=entries]").click();
+  await page.locator("[data-entry]").first().click();
+  await expect(page.locator("[data-score]").first()).toHaveValue("");
+  await expect(page.locator("#validated")).not.toBeChecked();
+  await expect(page.locator("#entry-detail")).toContainText("Ana și Maria");
+  for (const input of await page.locator("[data-score]").all())
+    await input.fill(await input.getAttribute("max"));
+  await expect(page.locator("#score-total")).toHaveText("100");
+  for (const input of await page.locator("[data-reason]").all())
+    await input.fill("Verificat pe baza noului barem.");
+  await page.locator("#validated").check();
+  await page.locator("#scores-form button[type=submit]").click();
+  await expect(page.locator(".notice.success")).toBeVisible();
+  await page.locator("[data-tab=ranking]").click();
+  await expect(page.locator(".winner")).toHaveCount(0);
+  await expect(page.locator("tbody")).toContainText("100 / 100");
+  await page.locator("[data-tab=settings]").click();
+  await page.locator("#toggle-contest").click();
+  await page.locator("#confirm-ok").click();
+  await expect(page.locator("#toggle-contest")).toContainText("Închide");
+  const ctx = await browser.newContext();
+  const student = await ctx.newPage();
+  await student.goto("http://127.0.0.1:3499/");
+  await student.locator("#group").fill("  gRuPa  2  ");
+  await student.locator("#members").fill("Alți membri");
+  await student.locator("#code").fill("OTHER-TEAM-CODE");
+  await student.locator("#join-form button").click();
+  await expect(student.locator("#join-error")).toContainText("deja folosit");
+  await student.locator("#group").fill("Echipa cu nume liber");
+  await student.locator("#join-form button").click();
+  await expect(student.locator(".question-top")).toBeVisible();
   await ctx.close();
 });

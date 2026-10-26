@@ -54,7 +54,11 @@ test("AI provider contract: proposals are unvalidated, invalid ranges rejected, 
     });
     const c = (await req("/api/admin")).content;
     async function submit(code, text) {
-      const e = await req("/api/join", "POST", { group: "Grupa 1", code });
+      const e = await req("/api/join", "POST", {
+        group: code,
+        members: "Ana și Mihai",
+        code,
+      });
       const answers = Object.fromEntries(
         c.questions.map((q) => [
           q.id,
@@ -74,7 +78,7 @@ test("AI provider contract: proposals are unvalidated, invalid ranges rejected, 
     assert.equal(e.validated, 0);
     assert.equal(
       e.scores.reduce((n, s) => n + s.score, 0),
-      100,
+      90,
     );
     assert.ok(e.scores.every((s) => s.reason));
     await req(`/api/admin/entries/${id}/scores`, "PUT", {
@@ -88,6 +92,48 @@ test("AI provider contract: proposals are unvalidated, invalid ranges rejected, 
     assert.equal(
       (await req("/api/admin")).entries.find((e) => e.id === bad).scores,
       null,
+    );
+    // An in-flight AI result must not overwrite an updated rubric.
+    const delayed = await submit("AI-DELAYED-ENTRY", "DELAY_FIXTURE");
+    const pending = req(`/api/admin/entries/${delayed}/ai`, "POST", {}, 409);
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    const current = await req("/api/admin");
+    await req("/api/admin/rubric", "PUT", {
+      bonusPoints: current.content.bonusPoints + 1,
+      revision: current.rubricRevision,
+      questions: current.content.questions.map(
+        ({ id, points, correctAnswer, rubric }) => ({
+          id,
+          points: id === 1 ? points - 1 : points,
+          correctAnswer,
+          rubric: rubric + " Actualizat.",
+        }),
+      ),
+    });
+    await pending;
+    assert.equal(
+      (await req("/api/admin")).entries.find((e) => e.id === delayed).scores,
+      null,
+    );
+    await req(`/api/admin/entries/${delayed}/ai`, "POST", {});
+    const reevaluated = (await req("/api/admin")).entries.find(
+      (e) => e.id === delayed,
+    );
+    assert.equal(reevaluated.scores.find((s) => s.id === 1).score, 4);
+    assert.equal(
+      reevaluated.scores.reduce((n, s) => n + s.score, 0),
+      89,
+    );
+    await req(`/api/admin/entries/${delayed}/scores`, "PUT", {
+      scores: reevaluated.scores,
+      validated: true,
+      revision: reevaluated.revision,
+    });
+    assert.equal(
+      (await req("/api/admin")).ranking.find(
+        (r) => r.group === "AI-DELAYED-ENTRY",
+      ).total,
+      100,
     );
     assert.ok(
       !(await (await fetch(`http://127.0.0.1:${port}/app.js`)).text()).includes(

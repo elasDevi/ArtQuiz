@@ -1,3 +1,4 @@
+let rubricDirty = false;
 const $ = (s, root = document) => root.querySelector(s),
   $$ = (s, root = document) => [...root.querySelectorAll(s)];
 const root = $("#app");
@@ -77,6 +78,17 @@ function chrome() {
   );
 }
 $("#language").onclick = async () => {
+  if (
+    rubricDirty &&
+    !window.confirm(
+      tr(
+        "Ai modificări nesalvate în barem. Le abandonezi?",
+        "Discard unsaved rubric changes?",
+      ),
+    )
+  )
+    return;
+  rubricDirty = false;
   if (dirty)
     try {
       await save();
@@ -99,7 +111,12 @@ function render() {
   renderHome();
 }
 function renderHome() {
-  root.innerHTML = `<section class="hero"><div class="hero-text"><span class="eyebrow">${escape(content.museum)}</span><h1>${tr("Arta de a privi.<br><em>Bucuria de a descoperi.</em>", "The art of looking.<br><em>The joy of discovery.</em>")}</h1><p class="intro">${tr("Un muzeu. Sute de povești. O provocare pentru echipa ta. Descoperă capodoperele Prado și lasă arta să-ți pună întrebări.", "One museum. Hundreds of stories. A challenge for your team. Discover Prado’s masterpieces and let art ask the questions.")}</p><div class="pill"><span class="dot"></span>${open ? tr("CONCURS DESCHIS", "CHALLENGE OPEN") : tr("CONCURS ÎNCHIS", "CHALLENGE CLOSED")}</div><div class="facts"><div><b>${content.questions.length}</b>${tr("exerciții de explorat", "exercises to explore")}</div><div><b>100</b>${tr("de puncte posibile", "possible points")}</div><div><b>RO / EN</b>${tr("două limbi, aceeași artă", "two languages, one art")}</div></div></div><div class="hero-art"><img src="/images/page1-2.jpeg" alt="Detaliu din Coborârea de pe cruce, Rogier van der Weyden"><div class="seal"><b>✦</b>${tr("PRIVEȘTE<br>MAI ATENT", "LOOK<br>CLOSER")}</div><div class="hero-caption"><span>ROGIER VAN DER WEYDEN · C. 1435</span><p>${tr("Fiecare detaliu spune o poveste.", "Every detail tells a story.")}</p></div></div></section>${window.winner ? `<div class="winner"><span class="eyebrow">${tr("REZULTAT FINAL VALIDAT", "VALIDATED FINAL RESULT")}</span><h2>${escape(window.winner.group)}</h2><p>${window.winner.total} / 100</p></div>` : ""}<section class="join" id="join"><div><span class="eyebrow">01 · ${tr("ÎNCEPE EXPLORAREA", "START EXPLORING")}</span><h2>${tr("Echipa ta.<br>Perspectiva voastră.", "Your team.<br>Your perspective.")}</h2><p class="muted">${tr("Alege grupa și un cod unic. Folosește același cod pentru a relua răspunsurile de pe alt dispozitiv.", "Choose your group and a unique code. Use the same code to resume on another device.")}</p><p class="help">${tr("Fără conturi. Fără nume de elevi. Păstrează codul în echipă: acesta oferă acces la răspunsurile voastre.", "No accounts. No student names. Keep the code within your team: it grants access to your answers.")}</p></div><form id="join-form" class="card"><div class="form-row"><div class="field"><label for="group">${tr("Grupa", "Group")}</label><select id="group" required><option value="">${tr("Selectează grupa", "Select your group")}</option>${content.groups.map((g) => `<option>${escape(g)}</option>`).join("")}</select></div><div class="field"><label for="code">${tr("Codul echipei", "Team code")}</label><input id="code" required minlength="6" maxlength="40" pattern="[A-Za-z0-9-]{6,40}" autocomplete="off" placeholder="ex. PRADO-7K29" aria-describedby="code-help"></div></div><p class="help" id="code-help">${tr("6–40 litere sau cifre. Recomandăm minimum 10 caractere aleatorii. Un cod = o participare.", "6–40 letters or numbers. At least 10 random characters recommended. One code = one entry.")}</p><p class="error-text" id="join-error"></p><button class="wide" ${!open ? "disabled" : ""}>${tr("Intră în provocare", "Enter the challenge")} <span>→</span></button>${!open ? `<p class="help">${tr("Concursul este închis. Profesoara îl poate redeschide.", "The challenge is closed. Your teacher can reopen it.")}</p>` : ""}<p class="help">${tr("Răspunsurile se salvează automat cât timp ești conectat. Trimiterea finală blochează modificările.", "Answers save automatically while connected. Final submission locks your entry.")}</p></form></section>`;
+  root.innerHTML = `<section class="hero"><div class="hero-text"><span class="eyebrow">${escape(content.museum)}</span><h1>${tr("Arta de a privi.<br><em>Bucuria de a descoperi.</em>", "The art of looking.<br><em>The joy of discovery.</em>")}</h1><p class="intro">${tr("Un muzeu. Sute de povești. O provocare pentru echipa ta. Descoperă capodoperele Prado și lasă arta să-ți pună întrebări.", "One museum. Hundreds of stories. A challenge for your team. Discover Prado’s masterpieces and let art ask the questions.")}</p><div class="pill"><span class="dot"></span>${open ? tr("CONCURS DESCHIS", "CHALLENGE OPEN") : tr("CONCURS ÎNCHIS", "CHALLENGE CLOSED")}</div><div class="facts"><div><b>${content.questions.length}</b>${tr("exerciții de explorat", "exercises to explore")}</div><div><b>100</b>${tr("de puncte posibile", "possible points")}</div><div><b>RO / EN</b>${tr("două limbi, aceeași artă", "two languages, one art")}</div></div></div><div class="hero-art"><img src="/images/page1-2.jpeg" alt="Detaliu din Coborârea de pe cruce, Rogier van der Weyden"><div class="seal"><b>✦</b>${tr("PRIVEȘTE<br>MAI ATENT", "LOOK<br>CLOSER")}</div><div class="hero-caption"><span>ROGIER VAN DER WEYDEN · C. 1435</span><p>${tr("Fiecare detaliu spune o poveste.", "Every detail tells a story.")}</p></div></div></section>${window.winner ? `<div class="winner"><span class="eyebrow">${tr("REZULTAT FINAL VALIDAT", "VALIDATED FINAL RESULT")}</span><h2>${escape(window.winner.group)}</h2><p>${window.winner.total} / 100</p></div>` : ""}<section class="join" id="join"><div><span class="eyebrow">01 · ${tr("ÎNCEPE EXPLORAREA", "START EXPLORING")}</span><h2>${tr("Echipa ta.<br>Perspectiva voastră.", "Your team.<br>Your perspective.")}</h2><p class="muted">${tr("Alege un nume unic pentru echipă, descrie membrii și păstrează codul pentru a relua răspunsurile. Numărul de echipe nu este limitat.", "Choose a unique team name, describe its members and keep your code to resume. There is no fixed number of teams.")}</p><p class="help">${tr("Fără conturi individuale. Folosește doar prenumele membrilor. Păstrează codul în echipă: acesta oferă acces la răspunsurile voastre.", "No individual accounts. Use members’ first names only. Keep the code within your team: it grants access to your answers.")}</p></div><form id="join-form" class="card"><div class="field"><label for="join-mode">${tr("Participare", "Entry")}</label><select id="join-mode"><option value="register">${tr("Înscrie o echipă nouă", "Register a new team")}</option><option value="resume">${tr("Reia participarea unei echipe", "Resume your team’s entry")}</option></select></div><div class="form-row"><div class="field"><label for="group">${tr("Numele echipei", "Team name")}</label><input id="group" required minlength="2" maxlength="80" autocomplete="organization" placeholder="${tr("Ex. Exploratorii Prado", "e.g. Prado Explorers")}"></div><div class="field"><label for="code">${tr("Codul echipei", "Team code")}</label><input id="code" required minlength="6" maxlength="40" pattern="[A-Za-z0-9-]{6,40}" autocomplete="off" placeholder="ex. PRADO-7K29" aria-describedby="code-help"></div></div><div class="field" id="members-field"><label for="members">${tr("Descrierea echipei și membrii", "Team description and members")}</label><textarea id="members" required minlength="2" maxlength="1500" placeholder="${tr("Prenumele membrilor și o scurtă descriere a echipei", "Members’ first names and a short team description")}"></textarea></div><p class="help" id="code-help">${tr("6–40 litere sau cifre. Recomandăm minimum 10 caractere aleatorii. Un cod = o participare.", "6–40 letters or numbers. At least 10 random characters recommended. One code = one entry.")}</p><p class="error-text" id="join-error"></p><button class="wide" ${!open ? "disabled" : ""}>${tr("Intră în provocare", "Enter the challenge")} <span>→</span></button>${!open ? `<p class="help">${tr("Concursul este închis. Profesoara îl poate redeschide.", "The challenge is closed. Your teacher can reopen it.")}</p>` : ""}<p class="help">${tr("Răspunsurile se salvează automat cât timp ești conectat. Trimiterea finală blochează modificările.", "Answers save automatically while connected. Final submission locks your entry.")}</p></form></section>`;
+  $("#join-mode").onchange = () => {
+    const resume = $("#join-mode").value === "resume";
+    $("#members-field").classList.toggle("hidden", resume);
+    $("#members").required = !resume;
+  };
   $("#join-form").onsubmit = (e) => {
     e.preventDefault();
     busy($("#join-form button"), async () => {
@@ -107,6 +124,8 @@ function renderHome() {
         progress = await api("/api/join", "POST", {
           group: $("#group").value,
           code: $("#code").value,
+          members: $("#members").value,
+          mode: $("#join-mode").value,
         });
         step = 0;
         dirty = false;
@@ -336,6 +355,7 @@ function renderAdmin() {
   const d = adminData;
   root.innerHTML = `<div class="page-head"><div><span class="eyebrow">${tr("PANOU DE ADMINISTRARE", "TEACHER DASHBOARD")}</span><h1>${escape(d.content.title)}</h1><span class="pill"><span class="dot"></span>${d.open ? tr("CONCURS DESCHIS", "CHALLENGE OPEN") : tr("CONCURS ÎNCHIS", "CHALLENGE CLOSED")}</span></div><button class="secondary" id="logout">${tr("Deconectare", "Sign out")} ↗</button></div><div class="stats"><div class="card stat"><b>${d.entries.length}</b><span>${tr("participări", "entries")}</span></div><div class="card stat"><b>${d.entries.filter((e) => e.submitted_at).length}</b><span>${tr("trimise", "submitted")}</span></div><div class="card stat"><b>${d.entries.filter((e) => e.validated).length}</b><span>${tr("validate", "validated")}</span></div></div><div class="admin-tabs">${[
     ["entries", "Răspunsuri & evaluare", "Answers & assessment"],
+    ["rubric", "Barem & răspunsuri corecte", "Rubric & correct answers"],
     ["ranking", "Clasament", "Rankings"],
     ["settings", "Concurs & configurare", "Challenge & settings"],
   ]
@@ -357,20 +377,46 @@ function renderAdmin() {
   $$("[data-tab]").forEach(
     (b) =>
       (b.onclick = () => {
+        if (
+          rubricDirty &&
+          !window.confirm(
+            tr(
+              "Ai modificări nesalvate în barem. Le abandonezi?",
+              "Discard unsaved rubric changes?",
+            ),
+          )
+        )
+          return;
+        rubricDirty = false;
         adminTab = b.dataset.tab;
         renderAdmin();
       }),
   );
-  $("#refresh").onclick = () => busy($("#refresh"), loadAdmin);
+  $("#refresh").onclick = () =>
+    busy($("#refresh"), async () => {
+      if (
+        rubricDirty &&
+        !window.confirm(
+          tr(
+            "Ai modificări nesalvate în barem. Le abandonezi?",
+            "Discard unsaved rubric changes?",
+          ),
+        )
+      )
+        return;
+      rubricDirty = false;
+      await loadAdmin();
+    });
   if (adminTab === "entries") renderEntries();
   if (adminTab === "ranking") renderRanking();
   if (adminTab === "settings") renderSettings();
+  if (adminTab === "rubric") renderRubric();
 }
 function renderEntries() {
   const d = adminData;
-  const groups = ["", ...d.content.groups];
+  const groups = ["", ...new Set(d.entries.map((e) => e.group_name))];
   $("#admin-body").innerHTML =
-    `<div class="admin-grid"><aside><div class="field"><label for="filter-group">${tr("Filtrează pe grupă", "Filter by group")}</label><select id="filter-group">${groups.map((g) => `<option value="${escape(g)}">${escape(g) || tr("Toate grupele", "All groups")}</option>`).join("")}</select></div><div class="entry-list" id="entry-list"></div></aside><section class="card" id="entry-detail"></section></div>`;
+    `<div class="admin-grid"><aside><div class="field"><label for="filter-group">${tr("Filtrează pe echipă", "Filter by team")}</label><select id="filter-group">${groups.map((g) => `<option value="${escape(g)}">${escape(g) || tr("Toate echipele", "All teams")}</option>`).join("")}</select></div><div class="entry-list" id="entry-list"></div></aside><section class="card" id="entry-detail"></section></div>`;
   $("#filter-group").onchange = renderEntryList;
   renderEntryList();
   renderEntryDetail();
@@ -382,7 +428,7 @@ function renderEntryList() {
     ? es
         .map(
           (e) =>
-            `<button class="entry-button ${selectedId === e.id ? "active" : ""}" data-entry="${e.id}">${escape(e.group_name)} · ${e.id.slice(0, 6)}<span>${e.validated ? tr("✓ Validat", "✓ Validated") : e.submitted_at ? tr("Trimis · de evaluat", "Submitted · to assess") : tr("Ciornă", "Draft")}${e.scores ? " · " + sum(e.scores) + "/100" : ""}</span></button>`,
+            `<button class="entry-button ${selectedId === e.id ? "active" : ""}" data-entry="${e.id}">${escape(e.group_name)} · ${e.id.slice(0, 6)}<span>${e.validated ? tr("✓ Validat", "✓ Validated") : e.submitted_at ? tr("Trimis · de evaluat", "Submitted · to assess") : tr("Ciornă", "Draft")}${e.scores ? " · " + evaluationTotal(e.scores) + "/100" : ""}</span></button>`,
         )
         .join("")
     : `<p class="empty">${tr("Nicio participare încă.", "No entries yet.")}</p>`;
@@ -395,6 +441,8 @@ function renderEntryList() {
       }),
   );
 }
+const bonus = () => Number(adminData?.content.bonusPoints || 0);
+const evaluationTotal = (s) => Math.round((sum(s) + bonus()) * 100) / 100;
 const sum = (s) =>
   Math.round((s || []).reduce((a, x) => a + Number(x.score || 0), 0) * 100) /
   100;
@@ -407,20 +455,20 @@ function renderEntryDetail() {
   }
   const qs = adminData.content.questions;
   $("#entry-detail").innerHTML =
-    `<div class="review-head"><div><span class="eyebrow">${e.submitted_at ? tr("PARTICIPARE TRIMISĂ", "SUBMITTED ENTRY") : tr("CIORNĂ · DOAR CITIRE", "DRAFT · READ ONLY")}</span><h2>${escape(e.group_name)}</h2><p class="subtitle">ID ${e.id.slice(0, 8)} · ${e.submitted_at ? escape(new Date(e.submitted_at).toLocaleString()) : tr("În lucru", "In progress")}</p></div><div class="total"><span id="score-total">${e.scores ? sum(e.scores) : "—"}</span><small> / 100</small></div></div>${e.validated ? `<div class="notice success">${tr("Rezultat validat de profesoară. Orice modificare invalidează desemnarea câștigătorului.", "Teacher-validated result. Changes reset the winner announcement.")}</div>` : ""}${e.submitted_at ? `<button id="ai-score" class="secondary" ${e.validated || !adminData.aiConfigured ? "disabled" : ""}>✦ ${tr("Propune evaluare cu AI", "Suggest scores with AI")}</button><p class="help">${adminData.aiConfigured ? tr("Răspunsurile vor fi trimise serviciului AI configurat. Verifică toate propunerile înainte de validare.", "Answers will be sent to the configured AI service. Review every proposal before validation.") : tr("AI nu este configurat. Adaugă AI_API_KEY pe server pentru evaluare automată. Evaluarea manuală funcționează acum.", "AI is not configured. Add AI_API_KEY on the server for automated assessment. Manual assessment is available now.")}</p>` : ""}<form id="scores-form">${qs
+    `<div class="review-head"><div><span class="eyebrow">${e.submitted_at ? tr("PARTICIPARE TRIMISĂ", "SUBMITTED ENTRY") : tr("CIORNĂ · DOAR CITIRE", "DRAFT · READ ONLY")}</span><h2>${escape(e.group_name)}</h2><p class="subtitle">${escape(e.members || tr("Membri nespecificați", "Members not specified"))}</p><p class="subtitle">ID ${e.id.slice(0, 8)} · ${e.submitted_at ? escape(new Date(e.submitted_at).toLocaleString()) : tr("În lucru", "In progress")}</p></div><div class="total"><span id="score-total">${e.scores ? evaluationTotal(e.scores) : "—"}</span><small> / 100</small></div></div>${e.validated ? `<div class="notice success">${tr("Rezultat validat de profesoară. Orice modificare invalidează desemnarea câștigătorului.", "Teacher-validated result. Changes reset the winner announcement.")}</div>` : ""}${e.submitted_at ? `<button id="ai-score" class="secondary" ${e.validated || !adminData.aiConfigured ? "disabled" : ""}>✦ ${tr("Propune evaluare cu AI", "Suggest scores with AI")}</button><p class="help">${adminData.aiConfigured ? tr("Răspunsurile vor fi trimise serviciului AI configurat. Verifică toate propunerile înainte de validare.", "Answers will be sent to the configured AI service. Review every proposal before validation.") : tr("AI nu este configurat. Adaugă AI_API_KEY pe server pentru evaluare automată. Evaluarea manuală funcționează acum.", "AI is not configured. Add AI_API_KEY on the server for automated assessment. Manual assessment is available now.")}</p>` : ""}<form id="scores-form">${qs
       .map((q) => {
         const s = e.scores?.find((x) => x.id === q.id),
           a = e.answers[q.id] || {};
-        return `<section class="score-card"><h3>${q.id}. ${escape(q[lang])}</h3>${q.fields.map((f) => `<label>${escape(f[lang])}</label><div class="answer">${escape(a[f.key] || "—")}</div>`).join("")}${a.emotions ? `<div class="answer">${escape(a.emotions.join(", "))}</div>` : ""}<details><summary class="help">${tr("Barem orientativ", "Assessment rubric")} · ${q.points} ${tr("puncte", "points")}</summary><p class="help">${escape(q.rubric)}</p></details>${e.submitted_at ? `<div class="score-fields"><div><label for="score-${q.id}">${tr("Punctaj", "Score")} / ${q.points}</label><input type="number" id="score-${q.id}" data-score="${q.id}" min="0" max="${q.points}" step="0.25" value="${s?.score ?? ""}" required></div><div><label for="reason-${q.id}">${tr("Justificare / feedback", "Reason / feedback")}</label><textarea id="reason-${q.id}" data-reason="${q.id}" required maxlength="6000">${escape(s?.reason || "")}</textarea></div></div>` : ""}</section>`;
+        return `<section class="score-card"><h3>${q.id}. ${escape(q[lang])}</h3>${q.fields.map((f) => `<label>${escape(f[lang])}</label><div class="answer">${escape(a[f.key] || "—")}</div>`).join("")}${a.emotions ? `<div class="answer">${escape(a.emotions.join(", "))}</div>` : ""}<details><summary class="help">${tr("Barem orientativ", "Assessment rubric")} · ${q.points} ${tr("puncte", "points")}</summary><p class="help"><b>${tr("Răspuns corect / repere", "Correct answer / reference")}</b><br>${escape(q.correctAnswer)}</p><p class="help">${escape(q.rubric)}</p></details>${e.submitted_at ? `<div class="score-fields"><div><label for="score-${q.id}">${tr("Punctaj", "Score")} / ${q.points}</label><input type="number" id="score-${q.id}" data-score="${q.id}" min="0" max="${q.points}" step="0.01" value="${s?.score ?? ""}" required></div><div><label for="reason-${q.id}">${tr("Justificare / feedback", "Reason / feedback")}</label><textarea id="reason-${q.id}" data-reason="${q.id}" required maxlength="6000">${escape(s?.reason || "")}</textarea></div></div>` : ""}</section>`;
       })
       .join(
         "",
-      )}${e.submitted_at ? `<div class="review-bar"><label class="inline-check"><input type="checkbox" id="validated" ${e.validated ? "checked" : ""}>${tr("Am verificat toate răspunsurile și validez rezultatul.", "I have reviewed every answer and validate this result.")}</label><div class="actions"><button type="submit">${tr("Salvează evaluarea", "Save assessment")}</button><span class="help">${tr("Maximum 100 de puncte", "Maximum 100 points")}</span></div></div>` : ""}</form>`;
+      )}${e.submitted_at ? `<div class="review-bar"><label class="inline-check"><input type="checkbox" id="validated" ${e.validated ? "checked" : ""}>${tr("Am verificat toate răspunsurile și validez rezultatul.", "I have reviewed every answer and validate this result.")}</label><div class="actions"><button type="submit">${tr("Salvează evaluarea", "Save assessment")}</button><span class="help">${tr(`Include ${bonus()} puncte din oficiu · maximum 100`, `Includes ${bonus()} participation points · maximum 100`)}</span></div></div>` : ""}</form>`;
   if (e.submitted_at) {
     $$("[data-score]").forEach(
       (el) =>
         (el.oninput = () =>
-          ($("#score-total").textContent = sum(
+          ($("#score-total").textContent = evaluationTotal(
             $$("[data-score]").map((x) => ({ score: Number(x.value) })),
           ))),
     );
@@ -471,7 +519,7 @@ function renderEntryDetail() {
 function renderRanking() {
   const d = adminData;
   $("#admin-body").innerHTML =
-    `${d.winner ? `<div class="winner"><span class="eyebrow">${tr("GRUPA CÂȘTIGĂTOARE · REZULTAT VALIDAT", "WINNING GROUP · VALIDATED RESULT")}</span><h2>✦ ${escape(d.winner.group)}</h2><p>${d.winner.total} / 100</p></div>` : ""}<div class="card"><span class="eyebrow">${tr("CLASAMENTUL ECHIPELOR", "TEAM RANKINGS")}</span><h2>${tr("Priviri diferite. Reușite împreună.", "Different perspectives. Shared achievements.")}</h2><p class="help">${tr("Punctajul grupei este media participărilor trimise din grupă. Apare numai după validarea tuturor acestora. Ciornele nu intră în calcul. La egalitate, profesoara alege dintre grupele cu punctaj maxim.", "A group’s score is the mean of its submitted entries. It appears only after all of them are validated. Drafts are excluded. In a tie, the teacher chooses among the highest-scoring groups.")}</p><div class="table-wrap"><table><thead><tr><th>#</th><th>${tr("Grupa", "Group")}</th><th>${tr("Participări", "Entries")}</th><th>${tr("Punctaj", "Score")}</th><th>${tr("Validare", "Validation")}</th></tr></thead><tbody>${d.ranking.map((r, i) => `<tr><td>${r.validated ? i + 1 : "—"}</td><td>${escape(r.group)}</td><td>${r.count}</td><td>${r.total ?? "—"} / 100</td><td>${r.validated ? "✓" : tr("În așteptare", "Pending")}</td></tr>`).join("")}</tbody></table></div><div class="actions"><a class="button secondary" href="/api/admin/export.xlsx">↓ Excel</a><a class="button secondary" href="/api/admin/export.pdf">↓ PDF</a></div><div class="notice">${tr("Câștigătorul poate fi desemnat după închiderea concursului și validarea tuturor participărilor trimise.", "Announce a winner after closing the challenge and validating all submitted entries.")}</div><div class="form-row"><div><label for="winner-group">${tr("Grupa câștigătoare", "Winning group")}</label><select id="winner-group">${d.ranking
+    `${d.winner ? `<div class="winner"><span class="eyebrow">${tr("ECHIPA CÂȘTIGĂTOARE · REZULTAT VALIDAT", "WINNING TEAM · VALIDATED RESULT")}</span><h2>✦ ${escape(d.winner.group)}</h2><p>${d.winner.total} / 100</p></div>` : ""}<div class="card"><span class="eyebrow">${tr("CLASAMENTUL ECHIPELOR", "TEAM RANKINGS")}</span><h2>${tr("Priviri diferite. Reușite împreună.", "Different perspectives. Shared achievements.")}</h2><p class="help">${tr("Fiecare echipă nouă are o singură participare. Totalul include punctele din oficiu și apare după validarea profesoarei. Ciornele nu intră în calcul. La egalitate, profesoara alege dintre echipele cu punctaj maxim. Participările istorice cu același nume sunt grupate prin medie.", "Each new team has one entry. Totals include participation points and appear after teacher validation. Drafts are excluded. Ties are resolved by choosing among top-scoring teams. Historical entries sharing a name are averaged.")}</p><div class="table-wrap"><table><thead><tr><th>#</th><th>${tr("Numele echipei", "Team name")}</th><th>${tr("Participări", "Entries")}</th><th>${tr("Punctaj", "Score")}</th><th>${tr("Validare", "Validation")}</th></tr></thead><tbody>${d.ranking.map((r, i) => `<tr><td>${r.validated ? i + 1 : "—"}</td><td>${escape(r.group)}</td><td>${r.count}</td><td>${r.total ?? "—"} / 100</td><td>${r.validated ? "✓" : tr("În așteptare", "Pending")}</td></tr>`).join("")}</tbody></table></div><div class="actions"><a class="button secondary" href="/api/admin/export.xlsx">↓ Excel</a><a class="button secondary" href="/api/admin/export.pdf">↓ PDF</a></div><div class="notice">${tr("Câștigătorul poate fi desemnat după închiderea concursului și validarea tuturor participărilor trimise.", "Announce a winner after closing the challenge and validating all submitted entries.")}</div><div class="form-row"><div><label for="winner-group">${tr("Echipa câștigătoare", "Winning team")}</label><select id="winner-group">${d.ranking
       .filter((r) => r.validated && r.total === d.ranking[0]?.total)
       .map((r) => `<option>${escape(r.group)}</option>`)
       .join(
@@ -483,8 +531,8 @@ function renderRanking() {
         !(await confirm(
           tr("Publică rezultatul final?", "Announce final result?"),
           tr(
-            "Grupa câștigătoare va apărea pe pagina de start.",
-            "The winning group will be displayed on the home page.",
+            "Echipa câștigătoare va apărea pe pagina de start.",
+            "The winning team will be displayed on the home page.",
           ),
         ))
       )
@@ -498,7 +546,7 @@ function renderRanking() {
 function renderSettings() {
   const d = adminData;
   $("#admin-body").innerHTML =
-    `<section class="card"><span class="eyebrow">${tr("CONTROLUL CONCURSULUI", "CHALLENGE CONTROLS")}</span><h2>${tr("Pregătește următoarea descoperire.", "Prepare the next discovery.")}</h2><div class="actions"><button id="toggle-contest" class="secondary">${d.open ? tr("Închide concursul", "Close challenge") : tr("Deschide concursul", "Open challenge")}</button></div><p class="help">${tr("Închiderea oprește intrările, salvările și trimiterile noi. Răspunsurile existente rămân păstrate. Schimbarea stării resetează anunțul câștigătorului.", "Closing stops new entries, saves and submissions. Existing answers are preserved. Changing status resets the winner announcement.")}</p><h3>${tr("Invită echipele", "Invite your teams")}</h3><p class="help">${tr("Codul QR folosește PUBLIC_URL dacă este configurat, altfel adresa curentă. Verifică adresa publică înainte de distribuire.", "The QR uses PUBLIC_URL when configured, otherwise the current address. Verify the public URL before sharing.")}</p><img src="/api/admin/qr" class="qr" alt="QR code"><div class="actions"><button class="secondary" id="copy-link">${tr("Copiază linkul elevilor", "Copy student link")}</button><a class="button secondary" href="/api/admin/qr" download="prado-qr.png">↓ QR PNG</a></div><hr><h3>${tr("Întrebări, imagini și barem", "Questions, images and rubric")}</h3><p class="help">${tr("Editează JSON înainte de prima participare. Totalul punctelor trebuie să fie exact 100. Imaginile sunt fișiere locale din public/images; folosește căi /images/nume.jpg. Pentru un alt muzeu, păstrează baza curentă și pornește cu un DATA_DIR nou.", "Edit JSON before the first entry. Points must total exactly 100. Images are local files in public/images; use /images/name.jpg paths. For another museum, preserve the current database and start with a new DATA_DIR.")}</p><form id="content-form"><label for="content-json">${tr("Configurație completă", "Complete configuration")}</label><textarea class="config-editor" id="content-json" spellcheck="false" ${d.entries.length ? "readonly" : ""}>${escape(JSON.stringify(d.content, null, 2))}</textarea><div class="actions"><button ${d.entries.length ? "disabled" : ""}>${tr("Salvează configurația", "Save configuration")}</button><button type="button" id="download-config" class="secondary">↓ JSON</button></div></form><details><summary class="help">${tr("Istoric operațiuni (ultimele 100)", "Audit log (latest 100)")}</summary><div class="answer">${d.audit.map((a) => escape(`${a.at} · ${a.action} · ${a.entry_id?.slice(0, 8) || ""}`)).join("\n")}</div></details></section>`;
+    `<section class="card"><span class="eyebrow">${tr("CONTROLUL CONCURSULUI", "CHALLENGE CONTROLS")}</span><h2>${tr("Pregătește următoarea descoperire.", "Prepare the next discovery.")}</h2><div class="actions"><button id="toggle-contest" class="secondary">${d.open ? tr("Închide concursul", "Close challenge") : tr("Deschide concursul", "Open challenge")}</button></div><p class="help">${tr("Închiderea oprește intrările, salvările și trimiterile noi. Răspunsurile existente rămân păstrate. Schimbarea stării resetează anunțul câștigătorului.", "Closing stops new entries, saves and submissions. Existing answers are preserved. Changing status resets the winner announcement.")}</p><h3>${tr("Invită echipele", "Invite your teams")}</h3><p class="help">${tr("Codul QR folosește PUBLIC_URL dacă este configurat, altfel adresa curentă. Verifică adresa publică înainte de distribuire.", "The QR uses PUBLIC_URL when configured, otherwise the current address. Verify the public URL before sharing.")}</p><img src="/api/admin/qr" class="qr" alt="QR code"><div class="actions"><button class="secondary" id="copy-link">${tr("Copiază linkul elevilor", "Copy student link")}</button><a class="button secondary" href="/api/admin/qr" download="prado-qr.png">↓ QR PNG</a></div><hr><h3>${tr("Întrebări, imagini și barem", "Questions, images and rubric")}</h3><p class="help">${tr("Editează JSON înainte de prima participare. Punctajele întrebărilor plus punctele din oficiu trebuie să totalizeze exact 100. Folosește ecranul Barem pentru editarea simplă, inclusiv după înscrieri. Imaginile sunt fișiere locale din public/images; folosește căi /images/nume.jpg. Pentru un alt muzeu, păstrează baza curentă și pornește cu un DATA_DIR nou.", "Edit JSON before the first entry. Question points plus participation points must total exactly 100. Use the Rubric screen for simple editing, including after registration. Images are local files in public/images; use /images/name.jpg paths. For another museum, preserve the current database and start with a new DATA_DIR.")}</p><form id="content-form"><label for="content-json">${tr("Configurație completă", "Complete configuration")}</label><textarea class="config-editor" id="content-json" spellcheck="false" ${d.entries.length ? "readonly" : ""}>${escape(JSON.stringify(d.content, null, 2))}</textarea><div class="actions"><button ${d.entries.length ? "disabled" : ""}>${tr("Salvează configurația", "Save configuration")}</button><button type="button" id="download-config" class="secondary">↓ JSON</button></div></form><details><summary class="help">${tr("Istoric operațiuni (ultimele 100)", "Audit log (latest 100)")}</summary><div class="answer">${d.audit.map((a) => escape(`${a.at} · ${a.action} · ${a.entry_id?.slice(0, 8) || ""}`)).join("\n")}</div></details></section>`;
   $("#toggle-contest").onclick = () =>
     busy($("#toggle-contest"), async () => {
       if (
@@ -519,12 +567,7 @@ function renderSettings() {
   $("#copy-link").onclick = async () => {
     try {
       await navigator.clipboard.writeText(d.publicUrl);
-      toast(
-        tr(
-          "Linkul elevilor a fost copiat.",
-          "Student link copied.",
-        ),
-      );
+      toast(tr("Linkul elevilor a fost copiat.", "Student link copied."));
     } catch {
       toast(d.publicUrl);
     }
@@ -556,7 +599,7 @@ function renderSettings() {
   };
 }
 window.addEventListener("beforeunload", (e) => {
-  if (dirty) {
+  if (dirty || rubricDirty) {
     e.preventDefault();
     e.returnValue = "";
   }
@@ -598,3 +641,104 @@ async function init() {
   }
 }
 init();
+
+function renderRubric() {
+  const d = adminData,
+    c = d.content;
+  $("#admin-body").innerHTML =
+    `<section class="card"><span class="eyebrow">${tr("BAREMUL PROFESOAREI", "TEACHER’S RUBRIC")}</span><h2>${tr("Un barem clar. O evaluare echitabilă.", "Clear criteria. Fair assessment.")}</h2><p class="muted">${tr("Completează răspunsurile corecte sau reperele pentru întrebările deschise și explică modul de acordare. AI va folosi exact acest barem, iar tu poți modifica și valida orice punctaj.", "Set correct answers or reference answers for open questions and explain how points are awarded. AI uses this rubric; you can edit and validate every score.")}</p><div class="notice">${tr("Modificarea baremului păstrează răspunsurile echipelor, dar șterge evaluările anterioare și anunțul câștigătorului. Echipele vor trebui reevaluate și validate din nou. La exercițiul 6, confirmă identificarea detaliului înainte de evaluarea AI.", "Changing the rubric preserves team answers but clears previous assessments and the winner announcement. Entries must be reassessed and validated again. Confirm the artwork identification in exercise 6 before AI assessment.")}</div>${d.rubricProposal ? `<button type="button" class="secondary" id="rubric-proposal">✦ ${tr("Încarcă propunerea: 90 + 10 din oficiu", "Load suggested rubric: 90 + 10 participation points")}</button><p class="help">${tr("Propunerea rămâne editabilă și nu se aplică până nu apeși Salvează. Baremul este orientativ, nu o cheie oficială a muzeului.", "The suggestion remains editable and applies only when saved. It is a draft, not an official museum answer key.")}</p>` : ""}<form id="rubric-form">${c.questions.map((q) => `<section class="score-card rubric-question"><div class="rubric-heading"><h3>${q.id}. ${escape(q[lang])}</h3><div class="field"><label for="rubric-points-${q.id}">${tr("Punctaj maxim", "Maximum points")}</label><input type="number" required min="0" max="100" step="0.01" data-rubric-points id="rubric-points-${q.id}" value="${q.points}"></div></div>${q.image ? `<img class="rubric-thumb" src="${escape(q.image)}" alt="${tr("Detaliul exercițiului", "Exercise detail")} ${q.id}">` : ""}<p class="help">${q.fields.map((f) => escape(f[lang])).join(" · ")}</p><div class="field"><label for="rubric-answer-${q.id}">${tr("Răspuns corect / răspunsuri acceptate / repere de interpretare", "Correct answer / accepted answers / interpretation guidance")}</label><textarea required maxlength="12000" id="rubric-answer-${q.id}">${escape(q.correctAnswer || "")}</textarea></div><div class="field"><label for="rubric-criteria-${q.id}">${tr("Mod de acordare a punctajului și punctaj parțial", "Scoring criteria and partial credit")}</label><textarea required maxlength="12000" id="rubric-criteria-${q.id}">${escape(q.rubric)}</textarea></div></section>`).join("")}<section class="score-card"><h3>${tr("Puncte din oficiu", "Participation points")}</h3><p class="help">${tr("Se adaugă automat o singură dată la totalul fiecărei participări evaluate. Nu sunt acordate de AI.", "Automatically added once to each assessed entry. These points are not awarded by AI.")}</p><label for="rubric-bonus">${tr("Număr de puncte din oficiu", "Number of participation points")}</label><input id="rubric-bonus" type="number" min="0" max="100" step="0.01" required value="${c.bonusPoints || 0}"></section><div class="review-bar rubric-footer"><div class="rubric-totals"><span>${tr("Întrebări", "Questions")}: <b id="rubric-subtotal"></b></span><span>${tr("Din oficiu", "Participation")}: <b id="rubric-bonus-total"></b></span><strong>${tr("TOTAL", "TOTAL")}: <span id="rubric-total"></span> / 100</strong></div><p id="rubric-validation" role="status" aria-live="polite"></p><button type="submit" id="save-rubric">${tr("Salvează baremul", "Save rubric")}</button></div></form></section>`;
+  const update = () => {
+    const values = $$("[data-rubric-points]").map((x) =>
+        x.value === "" ? NaN : Number(x.value),
+      ),
+      b =
+        $("#rubric-bonus").value === ""
+          ? NaN
+          : Number($("#rubric-bonus").value),
+      subtotal = Math.round(values.reduce((n, v) => n + v, 0) * 100) / 100,
+      total = Math.round((subtotal + b) * 100) / 100;
+    const valid =
+      values.every((v) => Number.isFinite(v) && v >= 0 && v <= 100) &&
+      Number.isFinite(b) &&
+      b >= 0 &&
+      b <= 100 &&
+      total === 100;
+    $("#rubric-subtotal").textContent = Number.isFinite(subtotal)
+      ? subtotal
+      : "—";
+    $("#rubric-bonus-total").textContent = Number.isFinite(b) ? b : "—";
+    $("#rubric-total").textContent = Number.isFinite(total) ? total : "—";
+    $("#rubric-validation").textContent = valid
+      ? tr("✓ Total valid: 100 de puncte.", "✓ Valid total: 100 points.")
+      : tr(
+          "Totalul trebuie să fie exact 100 de puncte, inclusiv punctele din oficiu.",
+          "The total must be exactly 100 points, including participation points.",
+        );
+    $("#rubric-validation").className = valid ? "help" : "error-text";
+    $("#save-rubric").disabled = !valid;
+  };
+  $("#rubric-form").oninput = () => {
+    rubricDirty = true;
+    update();
+  };
+  update();
+  $("#rubric-proposal")?.addEventListener("click", async () => {
+    if (
+      !(await confirm(
+        tr("Încarci propunerea de barem?", "Load the suggested rubric?"),
+        tr(
+          "Modificările nesalvate vor fi înlocuite. Nimic nu se aplică până la salvare.",
+          "Unsaved edits will be replaced. Nothing applies until you save.",
+        ),
+      ))
+    )
+      return;
+    const p = d.rubricProposal;
+    for (const q of p.questions) {
+      $(`#rubric-points-${q.id}`).value = q.points;
+      $(`#rubric-answer-${q.id}`).value = q.correctAnswer;
+      $(`#rubric-criteria-${q.id}`).value = q.rubric;
+    }
+    $("#rubric-bonus").value = p.bonusPoints;
+    rubricDirty = true;
+    update();
+  });
+  $("#rubric-form").onsubmit = (e) => {
+    e.preventDefault();
+    busy($("#save-rubric"), async () => {
+      const questions = c.questions.map((q) => ({
+        id: q.id,
+        points: Number($(`#rubric-points-${q.id}`).value),
+        correctAnswer: $(`#rubric-answer-${q.id}`).value.trim(),
+        rubric: $(`#rubric-criteria-${q.id}`).value.trim(),
+      }));
+      if (
+        d.entries.some((e) => e.scores || e.validated) &&
+        !(await confirm(
+          tr(
+            "Reevaluare după modificarea baremului",
+            "Reassessment after rubric change",
+          ),
+          tr(
+            "Evaluările existente vor fi șterse. Răspunsurile echipelor rămân păstrate. Continui?",
+            "Existing assessments will be cleared. Team answers are preserved. Continue?",
+          ),
+        ))
+      )
+        return;
+      await api("/api/admin/rubric", "PUT", {
+        questions,
+        bonusPoints: Number($("#rubric-bonus").value),
+        revision: d.rubricRevision,
+      });
+      rubricDirty = false;
+      await loadAdmin();
+      toast(
+        tr(
+          "Barem salvat. Evaluările vor folosi noul punctaj.",
+          "Rubric saved. Assessments will use the new scores.",
+        ),
+      );
+    });
+  };
+}

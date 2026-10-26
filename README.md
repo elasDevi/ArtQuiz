@@ -16,20 +16,20 @@ La prima pornire, dacă nu există `ADMIN_PASSWORD`, serverul creează `data/.se
 
 ## Fluxul elevilor
 
-1. Selectează grupa și creează un cod unic (6–40 caractere, recomandat 10+ aleatorii). Același cod, indiferent de majuscule, reia aceeași participare; păstrați-l în echipă. Codul este un secret de acces, nu un simplu număr public.
+1. Introdu un nume unic de echipă, descrierea cu membrii (preferabil prenume) și creează un cod unic (6–40 caractere, recomandat 10+ aleatorii). Pentru reluare selectează „Reia participarea” și introdu numele și codul, indiferent de majuscule; păstrați codul în echipă. Numele este unic după normalizarea majusculelor și spațiilor suplimentare. Numărul echipelor nu este fix. Codul este un secret de acces, nu un simplu număr public.
 2. Completează cele 12 exerciții. Cele cinci detalii sunt imaginile originale extrase din PDF, fără regenerare. Textul întrebărilor este transcris și tradus; exercițiile cu subpuncte păstrează câmpuri distincte. Exercițiul 9 permite mai multe emoții.
 3. Modificările sunt salvate automat pe server, cu indicator de stare. O copie locală permite recuperarea modificărilor nesalvate; aplicația nu promite funcționare offline completă.
 4. Verifică și trimite. Toate câmpurile sunt obligatorii. Trimiterea este atomică și unică pentru cod; răspunsurile devin nemodificabile.
 
 ## Fluxul profesoarei
 
-- `/admin`: filtrează participările pe grupe, citește răspunsuri și ciorne.
-- Completează manual punctajele/justificările sau cere o propunere AI. Fiecare exercițiu are un maxim; totalul este 100. AI nu validează rezultate.
+- `/admin`: filtrează participările pe echipe, citește răspunsuri și ciorne.
+- Completează manual punctajele/justificările sau cere o propunere AI. Fiecare exercițiu are un maxim; totalul întrebărilor plus punctele din oficiu este exact 100. Propunerea pentru baze noi este 90 + 10. AI nu validează rezultate.
 - Revizuiește punctajele, modifică-le și bifează validarea. Salvările concurente sunt detectate; nicio evaluare nu se suprascrie silențios.
-- Închide concursul, validează toate participările trimise și desemnează câștigătorul. La egalitate alegerea este explicită dintre grupele cu punctaj maxim.
-- Clasamentul folosește **media participărilor trimise ale fiecărei grupe**. O singură participare pe grupă este recomandată dacă se lucrează exclusiv în echipă. Ciornele sunt excluse, iar o grupă nu primește un total publicabil până când toate participările ei sunt validate. Schimbarea evaluării sau a stării concursului resetează anunțul câștigătorului.
+- Închide concursul, validează toate participările trimise și desemnează câștigătorul. La egalitate alegerea este explicită dintre echipele cu punctaj maxim.
+- Fiecare echipă nouă are o singură participare. Totalul include o singură dată punctele din oficiu și apare după validare. Ciornele sunt excluse. Pentru participările istorice care aveau același nume de grupă se păstrează media, până la validarea tuturor acestora. Schimbarea evaluării sau a stării concursului resetează anunțul câștigătorului.
 - Exportă Excel (răspunsuri, punctaje, justificări, clasament) sau PDF. Descarcă QR PNG și distribuie linkul public al elevilor.
-- Istoricul operațiunilor se păstrează în baza de date. Nu sunt colectate nume sau emailuri de elevi.
+- Istoricul operațiunilor se păstrează în baza de date. Descrierea membrilor este vizibilă profesoarei și în exporturi, fără conturi sau emailuri de elevi. Folosiți doar prenume. Membrii și codurile nu sunt trimise către AI.
 
 ## Evaluarea AI
 
@@ -48,9 +48,26 @@ Fără o cheie, butonul AI este dezactivat și evaluarea manuală funcționează
 
 ## Reutilizare / configurare
 
-În „Concurs & configurare” editează JSON-ul **înainte de prima participare**: titlu, muzeu, grupe, întrebări RO/EN, câmpuri, imagini, punctaje și barem. Totalul trebuie să fie exact 100; ID-urile și câmpurile trebuie să fie unice. Pune imaginile noi în `public/images`, apoi folosește căi `/images/fisier.jpg`. Nu folosi informații de răspuns în numele imaginilor destinate elevilor.
+În **„Barem & răspunsuri corecte”**, profesoara are câte o secțiune pentru fiecare dintre cele 12 exerciții: punctaj maxim, răspuns corect sau repere de interpretare și criterii de acordare cu punctaj parțial. Răspunsurile și criteriile sunt precompletate cu o propunere editabilă. Identificarea detaliului de la exercițiul 6 necesită confirmarea profesoarei; nu este prezentată drept certitudine.
 
-Pentru o ediție sau un muzeu nou, oprește serverul și configurează un `DATA_DIR` nou. Pornește, configurează accesul și importă în editor configurația JSON modificată. Nu șterge baza anterioară; aceasta este arhiva rezultatelor. Configurația este blocată după prima participare pentru a nu schimba întrebările în timpul evaluării. `content.js` este doar șablonul pentru baze noi, nu suprascrie configurația unei baze existente.
+La final există câmpul **Puncte din oficiu** și totalul actualizat în timp real: întrebări + oficiu = **100**. Formularul și serverul resping alte totaluri, valori negative, valori cu peste două zecimale, răspunsuri sau criterii lipsă. Punctele din oficiu sunt adăugate automat de server, nu de AI, în evaluare, clasament și exporturi.
+
+Baremul poate fi schimbat și după înscrieri. Salvarea păstrează răspunsurile echipelor, dar șterge evaluările anterioare, validările și desemnarea câștigătorului. Reevaluează și validează din nou. Conflictele de editare și rezultatele AI pornite cu un barem vechi sunt respinse.
+
+În „Concurs & configurare” poți edita JSON-ul întrebărilor înainte de prima participare: titlu, muzeu, întrebări RO/EN, câmpuri și imagini. Pune imaginile noi în `public/images`, apoi folosește căi `/images/fisier.jpg`. Numele echipelor nu se configurează într-o listă; ele sunt înscrise liber.
+
+Pentru o ediție sau un muzeu nou, oprește serverul și configurează un `DATA_DIR` nou. Păstrează baza veche drept arhivă. `content.js` este doar șablonul pentru baze noi.
+
+### Actualizarea unei instalări locale existente
+
+1. Oprește aplicația cu Ctrl+C în Terminal.
+2. Copiază întregul director `data` și fișierul `.env` (dacă există) într-un loc privat de backup.
+3. Descarcă noua versiune de pe GitHub și extrage-o într-un folder nou.
+4. Copiază directorul `data` și `.env` din instalarea veche în noul folder. Nu publica aceste fișiere.
+5. Pornește `node local-test.js` din noul folder. Lansatorul citește acum și `.env`, inclusiv cheia AI configurată local.
+6. Migrarea adaugă câmpurile noi fără a șterge răspunsuri, parole sau evaluări. Pentru bazele existente punctajele se păstrează și oficiul este inițial 0; în ecranul Barem poți încărca propunerea **90 + 10** și o poți adapta înainte de salvare.
+
+Nu suprascrie o bază existentă cu una goală. Înainte de modificarea baremului folosit, exportă rezultatele dacă vrei să păstrezi evaluările curente.
 
 ## Găzduire cu persistență
 
@@ -61,7 +78,7 @@ Un singur proces/replică Node.js 24 pe un VPS mic sau un container cu **volum p
 - Setează parola și cheia prin secretele platformei, nu în imagine sau Git. Include `SESSION_SECRET` opțional (32+ caractere); altfel este generat și păstrat în volumul de date.
 - Volumul păstrează SQLite, hash-ul parolei, secretul sesiunilor și sesiunile. Port 3000; healthcheck `/api/health` verifică și accesul bazei de date.
 - Backup: oprește aplicația și copiază **întreg directorul de date**, inclusiv fișierele WAL/SHM dacă există, într-o arhivă privată. Pentru backup fără oprire, folosește API-ul SQLite de backup. Protejează arhiva ca date de concurs. Testează restaurarea înainte de un eveniment.
-- Nu expune directorul `data`: serverul servește numai `public`. Nu se livrează `.env` sau baza către browser. Nu utiliza coduri triviale și nu distribui codurile altor grupe. Limite de autentificare, cookie HttpOnly/SameSite, verificare Origin și CSRF sunt incluse.
+- Nu expune directorul `data`: serverul servește numai `public`. Nu se livrează `.env` sau baza către browser. Nu utiliza coduri triviale și nu distribui codurile altor echipe. Limite de autentificare, cookie HttpOnly/SameSite, verificare Origin și CSRF sunt incluse.
 
 ## Verificare
 

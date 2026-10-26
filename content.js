@@ -1,3 +1,4 @@
+import { proposedRubric } from "./grading.js";
 const q = (id, ro, en, fields, points, rubric, image = null, extra = {}) => ({
   id,
   ro,
@@ -11,7 +12,7 @@ const q = (id, ro, en, fields, points, rubric, image = null, extra = {}) => ({
 export const initialContent = {
   title: "Prado Art Challenge",
   museum: "Museo Nacional del Prado · Madrid",
-  groups: ["Grupa 1", "Grupa 2", "Grupa 3", "Grupa 4", "Grupa 5", "Grupa 6"],
+  bonusPoints: 10,
   questions: [
     q(
       1,
@@ -216,3 +217,8 @@ export const initialContent = {
     ),
   ],
 };
+
+initialContent.questions.forEach((q, i) => {
+  const [points, correctAnswer, rubric] = proposedRubric[i];
+  Object.assign(q, { points, correctAnswer, rubric });
+});

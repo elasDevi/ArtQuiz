@@ -1314,3 +1314,67 @@ button,
     font-size: 16px;
   }
 }
+.rubric-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 20px;
+}
+.rubric-heading .field {
+  flex: 0 0 130px;
+}
+.rubric-heading h3 {
+  padding-top: 15px;
+}
+.rubric-thumb {
+  max-width: 180px;
+  max-height: 160px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  margin: 0 0 15px;
+}
+.rubric-question textarea {
+  min-height: 130px;
+}
+.rubric-totals {
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  font:
+    14px/1.5 Arial,
+    sans-serif;
+}
+.rubric-totals strong {
+  color: var(--gold);
+  font-size: 20px;
+}
+.rubric-footer {
+  margin-top: 20px;
+}
+.rubric-footer p {
+  margin: 10px 0;
+}
+.rubric-footer button {
+  width: 100%;
+}
+#rubric-bonus {
+  max-width: 180px;
+}
+@media (max-width: 600px) {
+  .rubric-heading .field {
+    flex-basis: 100px;
+  }
+  .rubric-heading h3 {
+    font-size: 22px;
+  }
+  .rubric-totals {
+    gap: 8px;
+  }
+  .rubric-totals strong {
+    width: 100%;
+  }
+  .rubric-footer {
+    bottom: 5px;
+  }
+}
