@@ -113,6 +113,8 @@ Ciornele salvate pe server de versiunile anterioare sunt păstrate pentru compat
 
 Nu suprascrie o bază existentă cu una goală. Înainte de modificarea baremului folosit, exportă rezultatele dacă vrei să păstrezi evaluările curente.
 
+Pentru instalarea asistată pe o instanță Oracle Ubuntu 24.04, folosește [ghidul pas cu pas](deploy/ORACLE.md) și `bash deploy-oracle.sh DOMENIUL_TAU`. Scriptul configurează Docker, stocare persistentă și HTTPS, dar nu creează instanța, regulile OCI sau DNS-ul.
+
 ## Găzduire cu persistență
 
 Un singur proces/replică Node.js 24 pe un VPS mic sau un container cu **volum persistent** este suficient. Nu folosi un filesystem efemer/serverless pentru SQLite și nu porni mai multe replici cu baze separate. Costul este cel al instanței mici + discul persistent; verifică tariful curent al furnizorului. Nu este necesar un abonament la o bază de date. Costurile AI sunt separate, numai la cereri explicite ale profesoarei.

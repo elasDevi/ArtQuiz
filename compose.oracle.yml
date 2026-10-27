@@ -1,0 +1,40 @@
+services:
+  app:
+    image: prado-art-challenge:oracle
+    build: .
+    restart: unless-stopped
+    env_file:
+      - ${PRADO_ENV_FILE:-.env}
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3000"
+      DATA_DIR: /app/data
+      TRUST_PROXY: "1"
+      PUBLIC_URL: https://${PRADO_DOMAIN:?Set PRADO_DOMAIN to your public hostname}
+    volumes:
+      - app_data:/app/data
+    expose:
+      - "3000"
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      PRADO_DOMAIN: ${PRADO_DOMAIN:?Set PRADO_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+volumes:
+  app_data:
+    name: ${PRADO_DATA_VOLUME:-prado_data}
+  caddy_data:
+    name: ${PRADO_CADDY_DATA_VOLUME:-prado_caddy_data}
+  caddy_config:
+    name: ${PRADO_CADDY_CONFIG_VOLUME:-prado_caddy_config}
