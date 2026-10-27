@@ -56,6 +56,7 @@ for (const provider of ["openai", "gemini"]) {
         return d;
       }
       await req("/api/session");
+      await req("/api/admin/ai/models", "GET", undefined, 401);
       await req("/api/admin/login", "POST", {
         username: "profesor",
         password: "AI-test-password-2026!",
@@ -84,6 +85,31 @@ for (const provider of ["openai", "gemini"]) {
         return e.id;
       }
       const id = await submit("AI-VALID-ENTRY", "Interpretare argumentată");
+      if (provider === "gemini") {
+        const unavailable = await req(
+          `/api/admin/entries/${id}/ai`,
+          "POST",
+          {},
+          502,
+        );
+        assert.match(unavailable.error, /Încarcă modele/);
+        const listed = await req("/api/admin/ai/models");
+        assert.equal(listed.freeTierVerified, false);
+        assert.deepEqual(
+          listed.models.map((m) => m.id),
+          ["gemini-test-alternate", "gemini-test-current"],
+        );
+        await req(
+          "/api/admin/ai/model",
+          "PUT",
+          { model: "gemini-unknown-model" },
+          400,
+        );
+        await req("/api/admin/ai/model", "PUT", {
+          model: "models/gemini-test-current",
+        });
+        assert.equal((await req("/api/admin")).aiModel, "gemini-test-current");
+      }
       await req(`/api/admin/entries/${id}/ai`, "POST", {});
       const e = (await req("/api/admin")).entries.find((e) => e.id === id);
       assert.equal(e.validated, 0);
@@ -201,6 +227,26 @@ for (const provider of ["openai", "gemini"]) {
         (await req("/api/admin")).entries.find((e) => e.id === quota).scores,
         manualScores,
       );
+      if (provider === "gemini") {
+        const before = (await req("/api/admin")).entries.map((e) => ({
+          id: e.id,
+          scores: e.scores,
+          validated: e.validated,
+        }));
+        await req("/api/admin/ai/model", "PUT", {
+          model: "gemini-test-alternate",
+        });
+        const after = await req("/api/admin");
+        assert.equal(after.aiModel, "gemini-test-alternate");
+        assert.deepEqual(
+          after.entries.map((e) => ({
+            id: e.id,
+            scores: e.scores,
+            validated: e.validated,
+          })),
+          before,
+        );
+      }
       assert.ok(
         !(
           await (await fetch(`http://127.0.0.1:${port}/app.js`)).text()

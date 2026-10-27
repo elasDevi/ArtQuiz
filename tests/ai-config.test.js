@@ -9,6 +9,7 @@ test("Gemini selection is explicit or inferred, credentials stay with their prov
   });
   assert.equal(gemini.provider, "gemini");
   assert.equal(gemini.key, "google-test-key");
+  assert.equal(gemini.model, "");
   assert.equal(
     new URL(gemini.endpoint).host,
     "generativelanguage.googleapis.com",

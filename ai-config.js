@@ -11,9 +11,8 @@ export function getAIConfig(env = process.env) {
       label: "Google Gemini",
       key: env.GEMINI_API_KEY,
       keyName: "GEMINI_API_KEY",
-      model: env.GEMINI_MODEL || "gemini-2.5-flash-lite",
-      endpoint:
-        "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      model: env.GEMINI_MODEL || "",
+      endpoint: "https://generativelanguage.googleapis.com/v1beta/models",
       supported: true,
     };
   if (provider === "openai")

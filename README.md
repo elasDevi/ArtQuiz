@@ -60,15 +60,17 @@ Comanda citește `.env` și folosește același `DATA_DIR` ca serverul. Modific�
 ```env
 AI_PROVIDER=gemini
 GEMINI_API_KEY=CHEIA_TA_GOOGLE
-GEMINI_MODEL=gemini-2.5-flash-lite
 ```
 
 4. Salvează cu Ctrl+O, Enter, Ctrl+X, apoi repornește cu `node local-test.js` (sau `npm start` pe server).
-5. În `/admin`, selectează o participare trimisă și apasă **Propune evaluare cu AI**. Furnizorul și modelul apar lângă buton. Verifică și validează propunerea.
+5. În `/admin`, deschide **Concurs & configurare → Google Gemini → Încarcă modele**. Lista este obținută de la Google pentru cheia ta, prin `GET /v1beta/models` și paginare. Selectează un model text disponibil cu cotă gratuită în proiectul tău și apasă **Salvează modelul**. Lista de modele nu certifică gratuitatea: verifică [tarifele](https://ai.google.dev/gemini-api/docs/pricing) și cotele din AI Studio.
+6. În **Răspunsuri & evaluare**, selectează o participare trimisă și apasă **Propune evaluare cu AI**. Verifică și validează propunerea.
 
-Modelul de mai sus este o valoare configurabilă, nu o garanție privind disponibilitatea sau gratuitatea lui în contul tău. Dacă nu este disponibil, setează `GEMINI_MODEL` la un model text compatibil, cu nivel gratuit, disponibil în proiectul tău. Verifică [modelele](https://ai.google.dev/gemini-api/docs/models), [tarifele](https://ai.google.dev/gemini-api/docs/pricing) și [cotele](https://ai.google.dev/gemini-api/docs/rate-limits) actuale. Documentația live nu a putut fi consultată din mediul de dezvoltare din cauza restricției de rețea (403).
+Nu mai este fixat un model Gemini implicit. O valoare `GEMINI_MODEL` din `.env` este folosită numai până când selectezi un model în panou. Modelul salvat în aplicație are prioritate și persistă după repornire; schimbarea modelului nu șterge punctaje sau validări.
 
-Integrarea folosește endpoint-ul compatibil Chat Completions al Gemini: `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`, cu modelul ales și răspuns JSON. Destinație HTTPS de permis pe server: **generativelanguage.googleapis.com**. Cheia `GEMINI_API_KEY` este folosită exclusiv pentru Google; cheia OpenAI nu este reutilizată. Dacă Google răspunde cu 429, aplicația afișează un mesaj privind cota și păstrează punctajele existente. Nu apelează alt furnizor și nu validează automat rezultatele.
+**Dacă primești 404:** modelul cerut poate fi indisponibil pentru cheia sau versiunea API. Actualizează aplicația, păstrează `data` și `.env`, repornește serverul, încarcă lista Google din panou și selectează un model disponibil. Nu este nevoie să ghicești un alt nume de model și nu trimite cheia în conversații. Dacă listarea este refuzată, aplicația afișează statusul și instrucțiuni pentru verificarea cheii/permisiunilor. Disponibilitatea modelelor și cotelor se poate schimba.
+
+Integrarea folosește API-ul nativ Gemini: `POST https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`, cu instrucțiuni de evaluare și `responseMimeType=application/json`. Cheia circulă numai în antetul `x-goog-api-key`, niciodată în URL sau în browser. Destinație HTTPS de permis pe server: **generativelanguage.googleapis.com**. API-ul de listare este disponibil numai profesoarei autentificate și nu trimite răspunsurile elevilor. Selectarea verifică din nou că modelul este disponibil pentru cheie. Dacă Google răspunde cu 429, punctajele existente sunt păstrate și nu se apelează alt furnizor.
 
 ### OpenAI — opțiune alternativă
 
@@ -78,7 +80,7 @@ AI_API_KEY=CHEIA_TA_OPENAI
 AI_MODEL=gpt-4.1-mini
 ```
 
-Destinație HTTPS: `api.openai.com`. OpenAI rămâne compatibil cu instalările anterioare. Fără `AI_PROVIDER`, prezența `GEMINI_API_KEY` selectează Gemini; altfel se folosește OpenAI. O selecție explicită are prioritate. Pentru Gemini schimbă modelul prin `GEMINI_MODEL`, nu prin `AI_MODEL`.
+Destinație HTTPS: `api.openai.com`. OpenAI rămâne compatibil cu instalările anterioare. Fără `AI_PROVIDER`, prezența `GEMINI_API_KEY` selectează Gemini; altfel se folosește OpenAI. O selecție explicită are prioritate. Pentru Gemini selectează modelul în panou; `GEMINI_MODEL` este doar o configurație inițială opțională, iar `AI_MODEL` se aplică numai OpenAI.
 
 Cheile rămân numai în `.env` ignorat de Git sau în managerul de secrete. Nu sunt incluse în JavaScript, răspunsuri API sau exporturi. La evaluare sunt trimise furnizorului ales întrebările, baremul și răspunsurile; numele membrilor și codurile de acces nu sunt trimise. Poți folosi exclusiv evaluarea manuală. Verifică termenii furnizorului pentru proiectul și regiunea ta înainte de utilizarea datelor elevilor.
 

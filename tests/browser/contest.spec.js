@@ -377,3 +377,44 @@ test("teacher signs in as profesor and changes password from the dashboard", asy
   await page.locator("#login-form button[type=submit]").click();
   await expect(page.locator(".stats")).toBeVisible();
 });
+
+test("recover a missing Gemini model by selecting one listed for the key, then assess a submitted entry", async ({
+  page,
+}) => {
+  await page.goto("/admin");
+  await page.locator("#password").fill("Browser-updated-password-2026!");
+  await page.locator("#login-form button[type=submit]").click();
+  await page.locator("[data-tab=entries]").click();
+  await page
+    .locator("[data-entry]")
+    .filter({ hasText: "Echipa cu ciornă locală" })
+    .click();
+  await page.locator("#ai-score").click();
+  await page.locator("#confirm-ok").click();
+  await expect(page.locator("#toast")).toContainText("Încarcă modele");
+  await page.locator("[data-tab=settings]").click();
+  await page.locator("#load-gemini-models").click();
+  await expect(page.locator("#gemini-model")).toBeEnabled();
+  await expect(page.locator("#gemini-model-status")).toContainText("nu apare");
+  await page.locator("#gemini-model").selectOption("gemini-test-current");
+  await page.locator("#save-gemini-model").click();
+  await expect(page.locator("#gemini-current")).toHaveText(
+    "gemini-test-current",
+  );
+  await page.reload();
+  await page.locator("[data-tab=settings]").click();
+  await expect(page.locator("#gemini-current")).toHaveText(
+    "gemini-test-current",
+  );
+  await page.locator("[data-tab=entries]").click();
+  await page
+    .locator("[data-entry]")
+    .filter({ hasText: "Echipa cu ciornă locală" })
+    .click();
+  await page.locator("#ai-score").click();
+  await expect(page.locator("#confirm-copy")).toContainText("Google Gemini");
+  await page.locator("#confirm-ok").click();
+  await expect(page.locator("#toast")).toContainText("Propunerea AI este gata");
+  await expect(page.locator("#score-total")).toHaveText("100");
+  await expect(page.locator("#validated")).not.toBeChecked();
+});

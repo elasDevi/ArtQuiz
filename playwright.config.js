@@ -11,10 +11,13 @@ export default defineConfig({
     },
   },
   webServer: {
-    command: "node server.js",
+    command: "node --import ./tests/fixtures/ai-provider.js server.js",
     url: "http://127.0.0.1:3499/api/health",
     env: {
       PORT: "3499",
+      AI_PROVIDER: "gemini",
+      GEMINI_API_KEY: "test-only-fake-google-key",
+      GEMINI_MODEL: "gemini-2.5-flash-lite",
       DATA_DIR: process.env.E2E_DATA_DIR || "/tmp/prado-browser-tests",
       ADMIN_PASSWORD: "Browser-test-password-2026!",
     },

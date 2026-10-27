@@ -564,7 +564,7 @@ function renderEntryDetail() {
   }
   const qs = adminData.content.questions;
   $("#entry-detail").innerHTML =
-    `<div class="review-head"><div><span class="eyebrow">${e.submitted_at ? tr("PARTICIPARE TRIMISĂ", "SUBMITTED ENTRY") : tr("CIORNĂ · DOAR CITIRE", "DRAFT · READ ONLY")}</span><h2>${escape(e.group_name)}</h2><p class="subtitle">${escape(e.members || tr("Membri nespecificați", "Members not specified"))}</p><p class="subtitle">ID ${e.id.slice(0, 8)} · ${e.submitted_at ? escape(new Date(e.submitted_at).toLocaleString()) : tr("În lucru", "In progress")}</p></div><div class="total"><span id="score-total">${e.scores ? evaluationTotal(e.scores) : "—"}</span><small> / 100</small></div></div>${e.validated ? `<div class="notice success">${tr("Rezultat validat de profesoară. Orice modificare invalidează desemnarea câștigătorului.", "Teacher-validated result. Changes reset the winner announcement.")}</div>` : ""}${e.submitted_at ? `<button id="ai-score" class="secondary" ${e.validated || !adminData.aiConfigured ? "disabled" : ""}>✦ ${tr("Propune evaluare cu AI", "Suggest scores with AI")}</button><p class="help">${adminData.aiConfigured ? tr(`Răspunsurile vor fi trimise către ${adminData.aiProviderLabel} (${adminData.aiModel}). Verifică toate propunerile înainte de validare.`, `Answers will be sent to ${adminData.aiProviderLabel} (${adminData.aiModel}). Review every proposal before validation.`) : tr(`AI nu este configurat. Adaugă ${adminData.aiKeyName} pe server pentru ${adminData.aiProviderLabel}. Evaluarea manuală funcționează acum.`, `AI is not configured. Add ${adminData.aiKeyName} on the server for ${adminData.aiProviderLabel}. Manual assessment is available now.`)}</p>` : `<div class="notice">${tr("Răspunsurile în curs de completare se salvează doar pe dispozitivul echipei. Ele vor apărea aici după trimiterea finală.", "Answers in progress stay on the team’s device. They appear here after final submission.")}</div>`}<form id="scores-form">${qs
+    `<div class="review-head"><div><span class="eyebrow">${e.submitted_at ? tr("PARTICIPARE TRIMISĂ", "SUBMITTED ENTRY") : tr("CIORNĂ · DOAR CITIRE", "DRAFT · READ ONLY")}</span><h2>${escape(e.group_name)}</h2><p class="subtitle">${escape(e.members || tr("Membri nespecificați", "Members not specified"))}</p><p class="subtitle">ID ${e.id.slice(0, 8)} · ${e.submitted_at ? escape(new Date(e.submitted_at).toLocaleString()) : tr("În lucru", "In progress")}</p></div><div class="total"><span id="score-total">${e.scores ? evaluationTotal(e.scores) : "—"}</span><small> / 100</small></div></div>${e.validated ? `<div class="notice success">${tr("Rezultat validat de profesoară. Orice modificare invalidează desemnarea câștigătorului.", "Teacher-validated result. Changes reset the winner announcement.")}</div>` : ""}${e.submitted_at ? `<button id="ai-score" class="secondary" ${e.validated || !adminData.aiConfigured ? "disabled" : ""}>✦ ${tr("Propune evaluare cu AI", "Suggest scores with AI")}</button><p class="help">${adminData.aiNeedsModel ? tr("Alege un model din Concurs & configurare → Google Gemini → Încarcă modele.", "Choose a model in Challenge & settings → Google Gemini → Load models.") : adminData.aiConfigured ? tr(`Răspunsurile vor fi trimise către ${adminData.aiProviderLabel} (${adminData.aiModel}). Verifică toate propunerile înainte de validare.`, `Answers will be sent to ${adminData.aiProviderLabel} (${adminData.aiModel}). Review every proposal before validation.`) : tr(`AI nu este configurat. Adaugă ${adminData.aiKeyName} pe server pentru ${adminData.aiProviderLabel}. Evaluarea manuală funcționează acum.`, `AI is not configured. Add ${adminData.aiKeyName} on the server for ${adminData.aiProviderLabel}. Manual assessment is available now.`)}</p>` : `<div class="notice">${tr("Răspunsurile în curs de completare se salvează doar pe dispozitivul echipei. Ele vor apărea aici după trimiterea finală.", "Answers in progress stay on the team’s device. They appear here after final submission.")}</div>`}<form id="scores-form">${qs
       .map((q) => {
         const s = e.scores?.find((x) => x.id === q.id),
           a = e.answers[q.id] || {};
@@ -656,6 +656,7 @@ function renderSettings() {
   const d = adminData;
   $("#admin-body").innerHTML =
     `<section class="card"><span class="eyebrow">${tr("CONTROLUL CONCURSULUI", "CHALLENGE CONTROLS")}</span><h2>${tr("Pregătește următoarea descoperire.", "Prepare the next discovery.")}</h2><div class="actions"><button id="toggle-contest" class="secondary">${d.open ? tr("Închide concursul", "Close challenge") : tr("Deschide concursul", "Open challenge")}</button></div><p class="help">${tr("Închiderea oprește intrările, salvările și trimiterile noi. Răspunsurile existente rămân păstrate. Schimbarea stării resetează anunțul câștigătorului.", "Closing stops new entries, saves and submissions. Existing answers are preserved. Changing status resets the winner announcement.")}</p><h3>${tr("Invită echipele", "Invite your teams")}</h3><p class="help">${tr("Codul QR folosește PUBLIC_URL dacă este configurat, altfel adresa curentă. Verifică adresa publică înainte de distribuire.", "The QR uses PUBLIC_URL when configured, otherwise the current address. Verify the public URL before sharing.")}</p><img src="/api/admin/qr" class="qr" alt="QR code"><div class="actions"><button class="secondary" id="copy-link">${tr("Copiază linkul elevilor", "Copy student link")}</button><a class="button secondary" href="/api/admin/qr" download="prado-qr.png">↓ QR PNG</a></div><hr><h3>${tr("Întrebări, imagini și barem", "Questions, images and rubric")}</h3><p class="help">${tr("Editează JSON înainte de prima participare. Punctajele întrebărilor plus punctele din oficiu trebuie să totalizeze exact 100. Folosește ecranul Barem pentru editarea simplă, inclusiv după înscrieri. Imaginile sunt fișiere locale din public/images; folosește căi /images/nume.jpg. Pentru un alt muzeu, păstrează baza curentă și pornește cu un DATA_DIR nou.", "Edit JSON before the first entry. Question points plus participation points must total exactly 100. Use the Rubric screen for simple editing, including after registration. Images are local files in public/images; use /images/name.jpg paths. For another museum, preserve the current database and start with a new DATA_DIR.")}</p><form id="content-form"><label for="content-json">${tr("Configurație completă", "Complete configuration")}</label><textarea class="config-editor" id="content-json" spellcheck="false" ${d.entries.length ? "readonly" : ""}>${escape(JSON.stringify(d.content, null, 2))}</textarea><div class="actions"><button ${d.entries.length ? "disabled" : ""}>${tr("Salvează configurația", "Save configuration")}</button><button type="button" id="download-config" class="secondary">↓ JSON</button></div></form><details><summary class="help">${tr("Istoric operațiuni (ultimele 100)", "Audit log (latest 100)")}</summary><div class="answer">${d.audit.map((a) => escape(`${a.at} · ${a.action} · ${a.entry_id?.slice(0, 8) || ""}`)).join("\n")}</div></details></section>`;
+  if (d.aiProvider === "gemini") renderGeminiSettings(d);
   $("#admin-body").insertAdjacentHTML(
     "beforeend",
     `<section class="card account-settings"><span class="eyebrow">${tr("CONTUL PROFESOAREI", "TEACHER ACCOUNT")}</span><h2>${tr("Schimbă parola", "Change password")}</h2><p class="help">${tr("Utilizator: profesor. Schimbarea parolei se păstrează după repornirea aplicației și deconectează celelalte sesiuni ale profesorului.", "Username: profesor. Password changes persist after restarting and sign out other teacher sessions.")}</p><form id="password-form"><div class="field"><label for="current-password">${tr("Parola actuală", "Current password")}</label><input id="current-password" type="password" required maxlength="200" autocomplete="current-password"></div><div class="form-row"><div class="field"><label for="new-password">${tr("Parola nouă", "New password")}</label><input id="new-password" type="password" required minlength="12" maxlength="200" autocomplete="new-password"></div><div class="field"><label for="confirm-password">${tr("Confirmă parola nouă", "Confirm new password")}</label><input id="confirm-password" type="password" required minlength="12" maxlength="200" autocomplete="new-password"></div></div><p class="help">${tr("Minimum 12 caractere.", "At least 12 characters.")}</p><p class="error-text" id="password-error" role="alert"></p><button type="submit">${tr("Salvează parola", "Save password")}</button></form></section>`,
@@ -884,6 +885,76 @@ function renderRubric() {
           "Rubric saved. Assessments will use the new scores.",
         ),
       );
+    });
+  };
+}
+
+function renderGeminiSettings(d) {
+  $("#admin-body").insertAdjacentHTML(
+    "beforeend",
+    `<section class="card account-settings" id="gemini-settings"><span class="eyebrow">GOOGLE GEMINI</span><h2>${tr("Alege un model disponibil", "Choose an available model")}</h2><p>${tr("Model actual", "Current model")}: <b id="gemini-current">${escape(d.aiModel || tr("Neselectat", "Not selected"))}</b></p><p class="help">${tr("Încarcă modelele disponibile pentru cheia ta Google. Lista nu certifică gratuitatea; verifică nivelul gratuit al modelului în AI Studio. Selectarea nu trimite răspunsuri pentru evaluare. Modelul salvat aici are prioritate față de GEMINI_MODEL din .env.", "Load models available to your Google key. This list does not verify free-tier availability; check that in AI Studio. Selection does not grade answers. A model saved here takes precedence over GEMINI_MODEL in .env.")}</p>${!d.geminiKeyConfigured ? `<p class="error-text">${tr("Configurează GEMINI_API_KEY în .env și repornește aplicația.", "Set GEMINI_API_KEY in .env and restart the app.")}</p>` : ""}<button type="button" class="secondary" id="load-gemini-models" ${!d.geminiKeyConfigured ? "disabled" : ""}>${tr("Încarcă modele", "Load models")}</button><p id="gemini-model-status" role="status" class="help"></p><form id="gemini-model-form"><div class="field"><label for="gemini-model">${tr("Model Google pentru evaluare", "Google model for assessment")}</label><select id="gemini-model" required disabled><option value="">${tr("Încarcă lista de modele", "Load the model list")}</option></select></div><button type="submit" id="save-gemini-model" disabled>${tr("Salvează modelul", "Save model")}</button></form></section>`,
+  );
+  $("#load-gemini-models").onclick = () =>
+    busy($("#load-gemini-models"), async () => {
+      const select = $("#gemini-model"),
+        status = $("#gemini-model-status");
+      select.disabled = true;
+      $("#save-gemini-model").disabled = true;
+      status.textContent = tr(
+        "Se verifică modelele disponibile la Google…",
+        "Checking available models with Google…",
+      );
+      try {
+        const result = await api("/api/admin/ai/models");
+        select.innerHTML =
+          `<option value="">${tr("Selectează un model disponibil", "Select an available model")}</option>` +
+          result.models
+            .map(
+              (m) =>
+                `<option value="${escape(m.id)}">${escape(m.name)} · ${escape(m.id)}</option>`,
+            )
+            .join("");
+        select.disabled = result.models.length === 0;
+        if (result.models.some((m) => m.id === result.selected))
+          select.value = result.selected;
+        $("#save-gemini-model").disabled = !select.value;
+        status.textContent = result.models.length
+          ? result.models.some((m) => m.id === result.selected)
+            ? tr(
+                "Lista a fost încărcată. Verifică gratuitatea modelului ales în AI Studio.",
+                "Models loaded. Check the chosen model’s free-tier availability in AI Studio.",
+              )
+            : tr(
+                "Modelul actual nu apare în lista disponibilă. Selectează un model din listă și salvează.",
+                "The current model is not in the available list. Select a listed model and save.",
+              )
+          : tr(
+              "Google nu a returnat modele text compatibile pentru această cheie.",
+              "Google returned no compatible text models for this key.",
+            );
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    });
+  $("#gemini-model").onchange = () =>
+    ($("#save-gemini-model").disabled = !$("#gemini-model").value);
+  $("#gemini-model-form").onsubmit = (e) => {
+    e.preventDefault();
+    busy($("#save-gemini-model"), async () => {
+      try {
+        await api("/api/admin/ai/model", "PUT", {
+          model: $("#gemini-model").value,
+        });
+        await loadAdmin();
+        toast(
+          tr(
+            "Modelul Google a fost salvat. Poți reîncerca evaluarea.",
+            "Google model saved. You can retry assessment.",
+          ),
+        );
+      } catch (error) {
+        $("#gemini-model-status").textContent = error.message;
+      }
     });
   };
 }
